@@ -398,7 +398,6 @@ static _Ptr<JSON_Object> json_object_init(_Ptr<JSON_Value> wrapping_value) {
     new_obj->wrapping_value = wrapping_value;
     new_obj->names = NULL;
     new_obj->values = NULL;
-    new_obj->capacity = 0;
     new_obj->count = 0;
     return new_obj;
 }
@@ -560,7 +559,6 @@ static _Ptr<JSON_Array> json_array_init(_Ptr<JSON_Value> wrapping_value) {
     }
     new_array->wrapping_value = wrapping_value;
     new_array->items = NULL;
-    new_array->capacity = 0;
     new_array->count = 0;
     return new_array;
 }
@@ -597,7 +595,9 @@ static JSON_Status json_array_resize(_Ptr<JSON_Array> array, size_t new_capacity
     parson_free(_Ptr<JSON_Value>, array->items);
 
     // TODO: This should be atomic
+    _Unchecked{
     array->capacity = new_capacity;
+    }
     array->items = _Dynamic_bounds_cast<_Array_ptr<_Ptr<JSON_Value>>>(new_items, count(array->capacity));
     return JSONSuccess;
 }
