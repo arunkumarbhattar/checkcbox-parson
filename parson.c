@@ -1172,12 +1172,10 @@ static int json_serialize_string(_Nt_array_ptr<const char> str_unbounded,
                 }
                 break;
             default: /*HACK for C3*/
-                _Unchecked {
                     if (buf != NULL) {
                         buf[0] = c;
                         buf += 1;
                     }
-                }
                 written_total += 1;
                 break;
         }
