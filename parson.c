@@ -82,15 +82,15 @@ _Itype_for_any(T) static _Ptr<void(void*)> parson_free : itype(_Ptr<void (_Array
 #define parson_free(t, p)   (free<t>(_Dynamic_bounds_cast<_Array_ptr<t>>(p, byte_count(0))))
 #define parson_free_unchecked(buf) (free(buf))
 
-static _Nt_array_ptr<char> parson_string_malloc(size_t sz) : count(sz){
+static _Nt_array_ptr<char> parson_string_malloc(size_t sz) : count(sz)_Unchecked{
   if(sz >= SIZE_MAX)
     return NULL;
-  //char *p = (char*)parson_malloc(char, sz + 1);
-  _Nt_array_ptr<char> p : count(sz+1) = NULL;
+  char *p = (char*)parson_malloc(char, sz + 1);
+  //_Nt_array_ptr<char> p : count(sz+1) = NULL;
   if (p != NULL)
     p[sz] = 0;
-  return p;
-  //return _Assume_bounds_cast<_Nt_array_ptr<char>>(p, count(sz));
+  //return p;
+  return _Assume_bounds_cast<_Nt_array_ptr<char>>(p, count(sz));
 }
 
 static int parson_escape_slashes = 1;
@@ -410,9 +410,7 @@ static JSON_Status json_object_add(_Ptr<JSON_Object> object, _Nt_array_ptr<const
     }
     size_t nameLen = strlen(name);
     _Nt_array_ptr<const char> name_with_len : count(nameLen) = NULL;
-    _Unchecked {
-        name_with_len = _Assume_bounds_cast<_Nt_array_ptr<const char>>(name, count(nameLen));
-    }
+    name_with_len = _Dynamic_bounds_cast<_Nt_array_ptr<const char>>(name, count(nameLen));
 
     return json_object_addn(object, name_with_len, nameLen, value);
 }
