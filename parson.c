@@ -82,13 +82,15 @@ _Itype_for_any(T) static _Ptr<void(void*)> parson_free : itype(_Ptr<void (_Array
 #define parson_free(t, p)   (free<t>(_Dynamic_bounds_cast<_Array_ptr<t>>(p, byte_count(0))))
 #define parson_free_unchecked(buf) (free(buf))
 
-static _Nt_array_ptr<char> parson_string_malloc(size_t sz) : count(sz) _Unchecked {
+static _Nt_array_ptr<char> parson_string_malloc(size_t sz) : count(sz){
   if(sz >= SIZE_MAX)
     return NULL;
-  char *p = (char*)parson_malloc(char, sz + 1);
+  //char *p = (char*)parson_malloc(char, sz + 1);
+  _Nt_array_ptr<char> p : count(sz) = NULL;
   if (p != NULL)
     p[sz] = 0;
-  return _Assume_bounds_cast<_Nt_array_ptr<char>>(p, count(sz));
+  return p;
+  //return _Assume_bounds_cast<_Nt_array_ptr<char>>(p, count(sz));
 }
 
 static int parson_escape_slashes = 1;
