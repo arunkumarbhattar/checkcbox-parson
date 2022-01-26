@@ -86,7 +86,7 @@ static _Nt_array_ptr<char> parson_string_malloc(size_t sz) : count(sz){
   if(sz >= SIZE_MAX)
     return NULL;
   //char *p = (char*)parson_malloc(char, sz + 1);
-  _Nt_array_ptr<char> p : count(sz) = NULL;
+  _Nt_array_ptr<char> p : count(sz+1) = NULL;
   if (p != NULL)
     p[sz] = 0;
   return p;
