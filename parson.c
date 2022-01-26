@@ -85,12 +85,10 @@ _Itype_for_any(T) static _Ptr<void(void*)> parson_free : itype(_Ptr<void (_Array
 static _Nt_array_ptr<char> parson_string_malloc(size_t sz) : count(sz)_Unchecked{
   if(sz >= SIZE_MAX)
     return NULL;
-  char *p = (char*)parson_malloc(char, sz + 1);
-  //_Nt_array_ptr<char> p : count(sz+1) = NULL;
+  _Nt_array_ptr<char> p : count(sz+1) = NULL;
   if (p != NULL)
     p[sz] = 0;
-  //return p;
-  return _Assume_bounds_cast<_Nt_array_ptr<char>>(p, count(sz));
+  return p;
 }
 
 static int parson_escape_slashes = 1;
