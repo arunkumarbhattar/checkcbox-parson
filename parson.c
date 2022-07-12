@@ -398,6 +398,9 @@ static _Ptr<JSON_Object> json_object_init(_Ptr<JSON_Value> wrapping_value) {
     new_obj->wrapping_value = wrapping_value;
     new_obj->names = NULL;
     new_obj->values = NULL;
+    _Unchecked{
+        new_obj->capacity = 0;
+    };
     new_obj->count = 0;
     return new_obj;
 }
@@ -557,7 +560,8 @@ static _Ptr<JSON_Array> json_array_init(_Ptr<JSON_Value> wrapping_value) {
     }
     new_array->wrapping_value = wrapping_value;
     new_array->items = NULL;
-    new_array->count = 0;
+    _Unchecked{
+    new_array->count = 0;};
     return new_array;
 }
 
@@ -1522,11 +1526,10 @@ JSON_Value * json_value_init_string(const char *string : itype(_Nt_array_ptr<con
 }
 
 JSON_Value * json_value_init_number(double number) : itype(_Ptr<JSON_Value>) {
-    _Ptr<JSON_Value> new_value = NULL;
+    _Ptr<JSON_Value> new_value =  parson_malloc(JSON_Value, sizeof(JSON_Value));
     if (IS_NUMBER_INVALID(number)) {
         return NULL;
     }
-    new_value = parson_malloc(JSON_Value, sizeof(JSON_Value));
     if (new_value == NULL) {
         return NULL;
     }
