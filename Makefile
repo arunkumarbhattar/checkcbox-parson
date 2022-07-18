@@ -1,5 +1,5 @@
-CC = /home/arun/Desktop/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang
-CFLAGS = -O0 -g -Wall -Wextra -std=c99 -pedantic-errors
+CC = /home/twinturbo/Desktop/compiler/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang-12
+CFLAGS = -O0 -g -Wextra -pedantic-errors
 
 all: test
 

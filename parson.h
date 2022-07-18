@@ -69,18 +69,18 @@ _Itype_for_any(T) void json_set_allocation_functions(_Ptr<void* (size_t s) : ity
 void json_set_escape_slashes(int escape_slashes);
 
 /* Parses first JSON value in a file, returns NULL in case of error */
-JSON_Value * json_parse_file(const char *filename : itype(_Nt_array_ptr<const char>)) : itype(_Ptr<JSON_Value>);
+_TPtr<JSON_Value> json_parse_file(_TNt_array_ptr<const char> filename);
 
 /* Parses first JSON value in a file and ignores comments (/ * * / and //),
    returns NULL in case of error */
-JSON_Value * json_parse_file_with_comments(const char *filename : itype(_Nt_array_ptr<const char>)) : itype(_Ptr<JSON_Value>);
+_TPtr<JSON_Value> json_parse_file_with_comments(_TNt_array_ptr<const char> filename);
 
 /*  Parses first JSON value in a string, returns NULL in case of error */
-JSON_Value * json_parse_string(const char *string : itype(_Nt_array_ptr<const char>)) : itype(_Ptr<JSON_Value>);
+_TPtr<JSON_Value> json_parse_string(_TNt_array_ptr<const char> string);
 
 /*  Parses first JSON value in a string and ignores comments (/ * * / and //),
     returns NULL in case of error */
-JSON_Value * json_parse_string_with_comments(const char *string : itype(_Nt_array_ptr<const char>)) : itype(_Ptr<JSON_Value>);
+_TPtr<JSON_Value> json_parse_string_with_comments(_TNt_array_ptr<const char> string);
 
 /* Serialization */
 size_t      json_serialization_size(const JSON_Value *value : itype(_Ptr<const JSON_Value>)); /* returns 0 on fail */
