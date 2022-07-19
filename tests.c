@@ -33,6 +33,8 @@
 #include <stdlib_checked.h>
 #include <string_checked.h>
 #include <math_checked.h>
+#include <string_tainted.h>
+#include <stdlib_tainted.h>
 
 #define TEST(A) printf("%d %-72s-", __LINE__, #A);\
                 if(A){puts(" OK");tests_passed++;}\
@@ -92,8 +94,16 @@ int main() {
 }
 
 void test_suite_1(void) {
-    JSON_Value *val;
-    TEST((val = json_parse_file("tests/test_1_1.txt")) != NULL);
+    _TPtr<TJSON_Value> val_tainted = NULL;
+    JSON_Value* val;
+    _TArray_ptr<char> filename = (_TArray_ptr<char>)
+            t_malloc<char>(sizeof("tests/test_1_1.txt"));
+    t_strcpy(filename,"tests/test_1_1.txt");
+    TEST((val_tainted = json_parse_file((_TNt_array_ptr<const char>)filename)) != NULL);
+    /*
+     * Marshalling Snippet
+     */
+    *val = *val_tainted;
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }

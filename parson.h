@@ -42,6 +42,11 @@ typedef struct json_object_t JSON_Object;
 typedef struct json_array_t  JSON_Array;
 typedef struct json_value_t  JSON_Value;
 
+/* Tstruct versions*/
+typedef Tstruct json_object_t_t TJSON_Object;
+typedef Tstruct json_array_t_t  TJSON_Array;
+typedef Tstruct json_value_t_t  TJSON_Value;
+
 enum json_value_type {
     JSONError   = -1,
     JSONNull    = 1,
@@ -69,18 +74,18 @@ _Itype_for_any(T) void json_set_allocation_functions(_Ptr<void* (size_t s) : ity
 void json_set_escape_slashes(int escape_slashes);
 
 /* Parses first JSON value in a file, returns NULL in case of error */
-_TPtr<JSON_Value> json_parse_file(_TNt_array_ptr<const char> filename);
+_Tainted _TPtr<TJSON_Value> json_parse_file(_TNt_array_ptr<const char> filename);
 
 /* Parses first JSON value in a file and ignores comments (/ * * / and //),
    returns NULL in case of error */
-_TPtr<JSON_Value> json_parse_file_with_comments(_TNt_array_ptr<const char> filename);
+_Tainted _TPtr<TJSON_Value> json_parse_file_with_comments(_TNt_array_ptr<const char> filename);
 
 /*  Parses first JSON value in a string, returns NULL in case of error */
-_TPtr<JSON_Value> json_parse_string(_TNt_array_ptr<const char> string);
+_Tainted _TPtr<TJSON_Value> json_parse_string(_TNt_array_ptr<const char> string);
 
 /*  Parses first JSON value in a string and ignores comments (/ * * / and //),
     returns NULL in case of error */
-_TPtr<JSON_Value> json_parse_string_with_comments(_TNt_array_ptr<const char> string);
+_Tainted _TPtr<TJSON_Value> json_parse_string_with_comments(_TNt_array_ptr<const char> string);
 
 /* Serialization */
 size_t      json_serialization_size(const JSON_Value *value : itype(_Ptr<const JSON_Value>)); /* returns 0 on fail */
