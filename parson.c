@@ -1442,7 +1442,7 @@ _Tainted _TPtr<TJSON_Value> json_parse_file_with_comments(_TNt_array_ptr<const c
  * This API is exposed to the public and reads the payload input through from the user
  * Hence this function is best suggested to be tainted
  */
-_TPtr<TJSON_Value> json_parse_string(_TNt_array_ptr<const char> string) {
+_Tainted _TPtr<TJSON_Value> json_parse_string(_TNt_array_ptr<const char> string) {
     if (string == NULL) {
         return NULL;
     }
@@ -1458,7 +1458,7 @@ _TPtr<TJSON_Value> json_parse_string(_TNt_array_ptr<const char> string) {
  * This API is exposed to the public and reads the payload input through from the user
  * Hence this function is best suggested to be tainted
  */
-_TPtr<TJSON_Value> json_parse_string_with_comments(_TNt_array_ptr<const char> string) {
+_Tainted _TPtr<TJSON_Value> json_parse_string_with_comments(_TNt_array_ptr<const char> string) {
     _TPtr<TJSON_Value> result = NULL;
     _TNt_array_ptr<char> string_mutable_copy = (_TNt_array_ptr<char>)tainted_parson_strdup(string);
     if (string_mutable_copy == NULL) {
