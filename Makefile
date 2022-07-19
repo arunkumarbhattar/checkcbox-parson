@@ -1,4 +1,4 @@
-CC = /home/twinturbo/Desktop/compiler/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang-12
+CC = /home/twinturbo/Desktop/compiler/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang
 CFLAGS = -O0 -g -Wextra -pedantic-errors
 
 all: test
