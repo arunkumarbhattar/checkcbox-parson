@@ -119,7 +119,7 @@ JSON_Status json_validate(const JSON_Value *schema : itype(_Ptr<const JSON_Value
 /*
  * JSON Object
  */
-JSON_Value  * json_object_get_value  (const JSON_Object *object : itype(_Ptr<const JSON_Object>), const char *name : itype(_Nt_array_ptr<const char>)) : itype(_Ptr<JSON_Value>);
+_Mirror JSON_Value  * json_object_get_value  (const JSON_Object *object : itype(_Ptr<const JSON_Object>), const char *name : itype(_Nt_array_ptr<const char>)) : itype(_Ptr<JSON_Value>);
 const char  * json_object_get_string (const JSON_Object *object : itype(_Ptr<const JSON_Object>), const char *name : itype(_Nt_array_ptr<const char>)) : itype(_Nt_array_ptr<const char>);
 JSON_Object * json_object_get_object (const JSON_Object *object : itype(_Ptr<const JSON_Object>), const char *name : itype(_Nt_array_ptr<const char>)) : itype(_Ptr<JSON_Object>);
 JSON_Array  * json_object_get_array  (const JSON_Object *object : itype(_Ptr<const JSON_Object>), const char *name : itype(_Nt_array_ptr<const char>)) : itype(_Ptr<JSON_Array>);
@@ -138,7 +138,7 @@ double        json_object_dotget_number (const JSON_Object *object : itype(_Ptr<
 int           json_object_dotget_boolean(const JSON_Object *object : itype(_Ptr<const JSON_Object>), const char *name : itype(_Nt_array_ptr<const char>)); /* returns -1 on fail */
 
 /* Functions to get available names */
-size_t        json_object_get_count   (const JSON_Object *object : itype(_Ptr<const JSON_Object>));
+_Mirror size_t        json_object_get_count   (const JSON_Object *object : itype(_Ptr<const JSON_Object>));
 const char  * json_object_get_name    (const JSON_Object *object : itype(_Ptr<const JSON_Object>), size_t index) : itype(_Nt_array_ptr<const char>);
 JSON_Value  * json_object_get_value_at(const JSON_Object *object : itype(_Ptr<const JSON_Object>), size_t index) : itype(_Ptr<JSON_Value>);
 JSON_Value  * json_object_get_wrapping_value(const JSON_Object *object : itype(_Ptr<const JSON_Object>)) : itype(_Ptr<JSON_Value>);
@@ -215,17 +215,17 @@ JSON_Status json_array_append_null(JSON_Array *array : itype(_Ptr<JSON_Array>));
 /*
  *JSON Value
  */
-JSON_Value * json_value_init_object (void)                                                    : itype(_Ptr<JSON_Value>);
-JSON_Value * json_value_init_array  (void)                                                    : itype(_Ptr<JSON_Value>);
+_TPtr<TJSON_Value> json_value_init_object (void);
+_Tainted _TPtr<TJSON_Value> json_value_init_array  (void);
 JSON_Value * json_value_init_string (const char *string : itype(_Nt_array_ptr<const char>))   : itype(_Ptr<JSON_Value>); /* copies passed string */
 JSON_Value * json_value_init_number (double number)                                           : itype(_Ptr<JSON_Value>);
 JSON_Value * json_value_init_boolean(int boolean)                                             : itype(_Ptr<JSON_Value>);
 JSON_Value * json_value_init_null   (void)                                                    : itype(_Ptr<JSON_Value>);
 JSON_Value * json_value_deep_copy   (const JSON_Value *value : itype(_Ptr<const JSON_Value>)) : itype(_Ptr<JSON_Value>);
-void         json_value_free        (JSON_Value *value : itype(_Ptr<JSON_Value>));
+_Tainted void         json_value_free        (_TPtr<TJSON_Value> value);
 
 _Mirror JSON_Value_Type json_value_get_type   (const JSON_Value *value : itype(_Ptr<const JSON_Value>));
-JSON_Object *   json_value_get_object (const JSON_Value *value : itype(_Ptr<const JSON_Value>)) : itype(_Ptr<JSON_Object>);
+_Mirror JSON_Object *   json_value_get_object (const JSON_Value *value : itype(_Ptr<const JSON_Value>)) : itype(_Ptr<JSON_Object>);
 JSON_Array  *   json_value_get_array  (const JSON_Value *value : itype(_Ptr<const JSON_Value>)) : itype(_Ptr<JSON_Array>);
 const char  *   json_value_get_string (const JSON_Value *value : itype(_Ptr<const JSON_Value>)) : itype(_Nt_array_ptr<const char>);
 double          json_value_get_number (const JSON_Value *value : itype(_Ptr<const JSON_Value>));
