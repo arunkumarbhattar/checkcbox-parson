@@ -43,11 +43,11 @@ typedef struct json_array_t  JSON_Array;
 typedef struct json_value_t  JSON_Value;
 
 /* Tstruct versions*/
-typedef Tstruct json_object_t_t TJSON_Object;
-typedef Tstruct json_array_t_t  TJSON_Array;
-typedef Tstruct json_value_t_t  TJSON_Value;
+typedef _Tainted Tstruct json_object_t_t TJSON_Object;
+typedef _Tainted Tstruct json_array_t_t  TJSON_Array;
+typedef _Tainted Tstruct json_value_t_t  TJSON_Value;
 
-_Mirror const enum json_value_type {
+_Tainted const enum json_value_type {
     JSONError   = -1,
     JSONNull    = 1,
     JSONString  = 2,
@@ -58,7 +58,7 @@ _Mirror const enum json_value_type {
 };
 typedef int JSON_Value_Type;
 
-enum json_result_t {
+_Mirror const enum json_result_t {
     JSONSuccess = 0,
     JSONFailure = -1
 };
@@ -89,17 +89,17 @@ _Tainted _TPtr<TJSON_Value> json_parse_string_with_comments(_TNt_array_ptr<const
 
 /* Serialization */
 size_t      json_serialization_size(_TPtr<const TJSON_Value> value); /* returns 0 on fail */
-JSON_Status json_serialize_to_buffer(_TPtr<const TJSON_Value> value, _TNt_array_ptr<const char> buf : byte_count(buf_size_in_bytes), size_t buf_size_in_bytes);
+JSON_Status json_serialize_to_buffer(_TPtr<const TJSON_Value> value, _TNt_array_ptr<char> buf : byte_count(buf_size_in_bytes), size_t buf_size_in_bytes);
 JSON_Status json_serialize_to_file(_TPtr<const TJSON_Value> value, _TNt_array_ptr<const char> filename);
-_TNt_array_ptr<const char>      json_serialize_to_string(_TPtr<const TJSON_Value> value);
+_TNt_array_ptr<char>      json_serialize_to_string(_TPtr<const TJSON_Value> value);
 
 /* Pretty serialization */
-size_t      json_serialization_size_pretty(_TPtr<const TJSON_Value> value); /* returns 0 on fail */
-JSON_Status json_serialize_to_buffer_pretty(_TPtr<const TJSON_Value> value, _TNt_array_ptr<const char> buf : byte_count(buf_size_in_bytes), size_t buf_size_in_bytes);
+_Tainted size_t      json_serialization_size_pretty(_TPtr<const TJSON_Value> value); /* returns 0 on fail */
+JSON_Status json_serialize_to_buffer_pretty(_TPtr<const TJSON_Value> value, _TNt_array_ptr<char> buf : byte_count(buf_size_in_bytes), size_t buf_size_in_bytes);
 JSON_Status json_serialize_to_file_pretty(_TPtr<const TJSON_Value> value, _TNt_array_ptr<const char> filename);
-_TNt_array_ptr<const char> json_serialize_to_string_pretty(_TPtr<const TJSON_Value> value);
+_Tainted _TNt_array_ptr<char> json_serialize_to_string_pretty(_TPtr<const TJSON_Value> value);
 
-void        json_free_serialized_string(_TNt_array_ptr<const char> string); /* frees string from json_serialize_to_string and json_serialize_to_string_pretty */
+_Mirror void        json_free_serialized_string(_TNt_array_ptr<const char> string); /* frees string from json_serialize_to_string and json_serialize_to_string_pretty */
 
 /* Comparing */
 int  json_value_equals(_TPtr<const TJSON_Value> a, _TPtr<const TJSON_Value> b);
@@ -139,9 +139,9 @@ _Mirror int           json_object_dotget_boolean(_TPtr<const TJSON_Object> objec
 
 /* Functions to get available names */
 _Mirror size_t        json_object_get_count   (_TPtr<const TJSON_Object>object);
-_TNt_array_ptr<const char> json_object_get_name    (_TPtr<const TJSON_Object> object, size_t index);
+_Mirror _TNt_array_ptr<const char> json_object_get_name    (_TPtr<const TJSON_Object> object, size_t index);
 _TPtr<TJSON_Value> json_object_get_value_at(_TPtr<const TJSON_Object> object, size_t index);
-_TPtr<TJSON_Value> json_object_get_wrapping_value(_TPtr<const TJSON_Object> object);
+_Mirror _TPtr<TJSON_Value> json_object_get_wrapping_value(_TPtr<const TJSON_Object> object);
 
 /* Functions to check if object has a value with a specific name. Returned value is 1 if object has
  * a value and 0 if it doesn't. dothas functions behave exactly like dotget functions. */
@@ -179,13 +179,13 @@ JSON_Status json_object_clear(_TPtr<TJSON_Object> object);
 /*
  *JSON Array
  */
-_TPtr<TJSON_Value> json_array_get_value  (_TPtr<const TJSON_Array> array, size_t index);
+_Mirror _TPtr<TJSON_Value> json_array_get_value  (_TPtr<const TJSON_Array> array, size_t index);
 _TNt_array_ptr<const char> json_array_get_string (_TPtr<const TJSON_Array> array, size_t index);
 _TPtr<TJSON_Object>  json_array_get_object (_TPtr<const TJSON_Array> array, size_t index);
 _TPtr<TJSON_Array> json_array_get_array  (_TPtr<const TJSON_Array> array , size_t index);
 double        json_array_get_number (_TPtr<const TJSON_Array>array, size_t index); /* returns 0 on fail */
 int           json_array_get_boolean(_TPtr<const TJSON_Array>array, size_t index); /* returns -1 on fail */
-size_t        json_array_get_count  (_TPtr<const TJSON_Array> array);
+_Mirror size_t        json_array_get_count  (_TPtr<const TJSON_Array> array);
 _TPtr<TJSON_Value> json_array_get_wrapping_value(_TPtr<const TJSON_Array>array);
 
 /* Frees and removes value at given index, does nothing and returns JSONFailure if index doesn't exist.
@@ -215,12 +215,12 @@ JSON_Status json_array_append_null(_TPtr<TJSON_Array> array);
 /*
  *JSON Value
  */
-_TPtr<TJSON_Value> json_value_init_object (void);
+_Tainted _TPtr<TJSON_Value> json_value_init_object (void);
 _Tainted _TPtr<TJSON_Value> json_value_init_array  (void);
 _TPtr<TJSON_Value> json_value_init_string (_TNt_array_ptr<const char> string); /* copies passed string */
 _Tainted _TPtr<TJSON_Value> json_value_init_number (double number);
-_TPtr<TJSON_Value> json_value_init_boolean(int boolean);
-_TPtr<TJSON_Value> json_value_init_null   (void);
+_Mirror _TPtr<TJSON_Value> json_value_init_boolean(int boolean);
+_Tainted _TPtr<TJSON_Value> json_value_init_null   (void);
 _TPtr<TJSON_Value> json_value_deep_copy   (_TPtr<const TJSON_Value> value);
 _Tainted void         json_value_free        (_TPtr<TJSON_Value> value);
 
@@ -228,10 +228,10 @@ _Mirror JSON_Value_Type json_value_get_type   (_TPtr<const TJSON_Value> value);
 _Mirror _TPtr<TJSON_Object>   json_value_get_object (_TPtr<const TJSON_Value>value);
 _Tainted _TPtr<TJSON_Object> json_value_get_object_tainted(_TPtr<const TJSON_Value> value);
 _Tainted JSON_Value_Type json_value_get_type_tainted   (const _TPtr<const TJSON_Value>value);
-_TPtr<TJSON_Array>   json_value_get_array  (_TPtr<const TJSON_Value> value);
-_TNt_array_ptr<const char>json_value_get_string (_TPtr<const TJSON_Value> value);
-double          json_value_get_number (_TPtr<const TJSON_Value> value);
-int             json_value_get_boolean(_TPtr<const TJSON_Value> value);
+_Mirror _TPtr<TJSON_Array>   json_value_get_array  (_TPtr<const TJSON_Value> value);
+_Mirror _TNt_array_ptr<const char>json_value_get_string (_TPtr<const TJSON_Value> value);
+_Mirror double          json_value_get_number (_TPtr<const TJSON_Value> value);
+_Mirror int             json_value_get_boolean(_TPtr<const TJSON_Value> value);
 _TPtr<TJSON_Value>   json_value_get_parent (_TPtr<const TJSON_Value> value);
 
 /* Same as above, but shorter */

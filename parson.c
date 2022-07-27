@@ -87,7 +87,7 @@ _Itype_for_any(T) static _Ptr<void(void*)> parson_free : itype(_Ptr<void (_Array
 #define parson_free(t, p)   (free<t>(_Dynamic_bounds_cast<_Array_ptr<t>>(p, byte_count(0))))
 #define parson_tainted_free(t, p)   (t_free<t>(_Tainted_Dynamic_bounds_cast<_TArray_ptr<t>>(p, byte_count(0))))
 
-#define parson_free_unchecked(buf) (free(buf))
+#define parson_free_unchecked(buf) (t_free(buf))
 
 _Tainted static _TNt_array_ptr<char> parson_string_tainted_malloc(size_t sz) : count(sz) _Unchecked{
   if(sz >= SIZE_MAX)
@@ -143,7 +143,7 @@ struct json_array_t {
 };
 
 /* Type definitions */
-typedef Tstruct json_value_value_t_t {
+typedef _Tainted Tstruct json_value_value_t_t {
     _TNt_array_ptr<char> string;
     double       number;
     _TPtr<TJSON_Object> object;
@@ -158,7 +158,7 @@ Tstruct json_value_t_t {
     TJSON_Value_Value value;
 };
 
-Tstruct json_object_t_t {
+_Tainted Tstruct json_object_t_t {
     _TPtr<TJSON_Value> wrapping_value;
     _TArray_ptr<_TNt_array_ptr<char>> names : count(capacity);
     _TArray_ptr<_TPtr<TJSON_Value>> values  : count(capacity);
@@ -166,7 +166,7 @@ Tstruct json_object_t_t {
     size_t       capacity;
 };
 
-Tstruct json_array_t_t {
+_Tainted Tstruct json_array_t_t {
     _TPtr<TJSON_Value> wrapping_value;
     _TArray_ptr<_TPtr<TJSON_Value>> items : count(capacity);
     size_t       count;
@@ -183,17 +183,17 @@ static int _Unchecked      parse_utf16_hex(const char* string, unsigned int* res
 static int                 num_bytes_in_utf8_sequence(unsigned char c);
 _Tainted static int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> s, _TPtr<int> len); // len is set after, not a constraint on string
 static int is_valid_utf8(_TNt_array_ptr<const char> string : bounds(string, string + string_len), size_t string_len);
-static int                 is_decimal(_TNt_array_ptr<const char> string : count(length), size_t length);
+_Tainted static int                 is_decimal(_TNt_array_ptr<const char> string : count(length), size_t length);
 
 /* JSON Object */
 _Tainted static _TPtr<TJSON_Object> json_object_init(_TPtr<TJSON_Value> wrapping_value);
 static JSON_Status       json_object_add(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name, _TPtr<TJSON_Value> value);
-static JSON_Status       json_object_addn(_TPtr<TJSON_Object> object,
+_Tainted static JSON_Status       json_object_addn(_TPtr<TJSON_Object> object,
                                           _TNt_array_ptr<const char> name : count(name_len),
                                           size_t name_len,
                                           _TPtr<TJSON_Value> value);
 _Tainted static JSON_Status       json_object_resize(_TPtr<TJSON_Object> object, size_t new_capacity);
-static _TPtr<TJSON_Value>      json_object_getn_value(_TPtr<const TJSON_Object> object, _TNt_array_ptr<const char> name : count(name_len), size_t name_len);
+_Mirror static _TPtr<TJSON_Value>      json_object_getn_value(_TPtr<const TJSON_Object> object, _TNt_array_ptr<const char> name : count(name_len), size_t name_len);
 _Tainted static JSON_Status       json_object_remove_internal(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name, int free_value);
 _Tainted static JSON_Status       json_object_dotremove_internal(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name, int free_value);
 _Tainted static void              json_object_free(_TPtr<TJSON_Object> object);
@@ -227,7 +227,7 @@ static _TPtr<TJSON_Value>       parse_value(_TPtr<_TNt_array_ptr<const char>> st
 
 /* Serialization */
 _Tainted static int   json_serialize_to_buffer_r(_TPtr<const TJSON_Value> value, _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len), int level, int is_pretty, _TNt_array_ptr<char> num_buf, _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
-static int            json_serialize_string(_TNt_array_ptr<const char> string, _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len), _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
+_Tainted static int            json_serialize_string(_TNt_array_ptr<const char> string, _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len), _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
 static int _Mirror _Unchecked append_indent(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
                                     int level, _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
 static int _Mirror _Unchecked append_string(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
@@ -402,7 +402,7 @@ static int is_valid_utf8(_TNt_array_ptr<const char> string : bounds(string, stri
 /*
  * Doesn't violate checked-ness, hence safe.
  */
-static int is_decimal(_TNt_array_ptr<const char> string : count(length), size_t length) {
+_Tainted static int is_decimal(_TNt_array_ptr<const char> string : count(length), size_t length) {
     if (length > 1 && string[0] == '0' && string[1] != '.') {
         return 0;
     }
@@ -503,6 +503,8 @@ _Mirror static void remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<co
  */
 _Tainted static _TPtr<TJSON_Object> json_object_init(_TPtr<TJSON_Value> wrapping_value_ip) {
     _TPtr<TJSON_Object> new_obj = parson_tainted_malloc(TJSON_Object, sizeof(JSON_Object));
+    _TPtr<int> g = parson_tainted_malloc(int, sizeof(int));
+    *g = 10;
     if (new_obj == NULL) {
         return NULL;
     }
@@ -532,7 +534,7 @@ static JSON_Status json_object_add(_TPtr<TJSON_Object> object, _TNt_array_ptr<co
  * No Unchecked-ness in here
  * However, will accept and return Tainted pointers as it makes sense
  */
-static JSON_Status json_object_addn(_TPtr<TJSON_Object> object,
+_Tainted static JSON_Status json_object_addn(_TPtr<TJSON_Object> object,
                                     _TNt_array_ptr<const char> name : count(name_len),
                                     size_t name_len,
                                     _TPtr<TJSON_Value> value) {
@@ -577,7 +579,7 @@ _Tainted static JSON_Status json_object_resize(_TPtr<TJSON_Object> object, size_
         }
         JSON_Value** temp_values = (JSON_Value**)parson_tainted_malloc(TJSON_Value*, new_capacity * sizeof(TJSON_Value*));
         if (temp_values == NULL) {
-            parson_free_unchecked(temp_names);
+            parson_free_unchecked((_TArray_ptr<void>)temp_names);
             return JSONFailure;
         }
 
@@ -814,7 +816,7 @@ _TNt_array_ptr<char> processed) {
     char* processed_ptr = (char*)(processed);
     const char* unprocessed_ptr = (const char*)(unprocessed);
     unprocessed_ptr++; /* skips u */
-    parse_succeeded = parse_utf16_hex(unprocessed_ptr, &cp);
+    parse_succeeded = parse_utf16_hex(unprocessed_ptr, (unsigned int *)&cp);
     if (!parse_succeeded) {
         return JSONFailure;
     }
@@ -835,7 +837,7 @@ _TNt_array_ptr<char> processed) {
         if (unprocessed_ptr++ != (const char *)'\\' || unprocessed_ptr++ != (const char *)'u') {
             return JSONFailure;
         }
-        parse_succeeded = parse_utf16_hex(unprocessed_ptr, &trail);
+        parse_succeeded = parse_utf16_hex(unprocessed_ptr, (unsigned int *)&trail);
         if (!parse_succeeded || trail < 0xDC00 || trail > 0xDFFF) { /* valid trail surrogate? (0xDC00..0xDFFF) */
             return JSONFailure;
         }
@@ -1148,9 +1150,9 @@ _Tainted static _TPtr<TJSON_Value> parse_boolean_value(_TPtr<_TNt_array_ptr<cons
 _Tainted static _Unchecked _TPtr<TJSON_Value> parse_number_value(_TPtr<_TNt_array_ptr<const char>> string) {
     _TPtr<char> end = NULL;
     double number = 0;
-    errno = 0;
+    _t_errno = 0;
     number = t_strtod((_TNt_array_ptr<char>)*string, (_TPtr<_TPtr<char>>)&end);
-    if (errno || !is_decimal((_TNt_array_ptr<char>)*string, (size_t)(end - *string))) {
+    if (_t_errno || !is_decimal((_TNt_array_ptr<char>)*string, (size_t)(end - *string))) {
         return NULL;
     }
     *string = (_TNt_array_ptr<const char>)end;
@@ -1318,7 +1320,7 @@ _Tainted static int json_serialize_to_buffer_r(_TPtr<const TJSON_Value> value,
                 if (buf != NULL) {
                     num_buf = _Tainted_Assume_bounds_cast<_TNt_array_ptr<char>>((_TNt_array_ptr<char>)buf, count(0));
                 }
-                written = sprintf((char*)num_buf, FLOAT_FORMAT, num);
+                written = t_sprintf(num_buf, FLOAT_FORMAT, num);
             }
             if (written < 0) {
                 return -1;
@@ -1340,7 +1342,7 @@ _Tainted static int json_serialize_to_buffer_r(_TPtr<const TJSON_Value> value,
 /*
  * TODO: Nothing really harmful here
  */
-static int json_serialize_string(_TNt_array_ptr<const char> str_unbounded,
+_Tainted static int json_serialize_string(_TNt_array_ptr<const char> str_unbounded,
                                  _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
                                  _TNt_array_ptr<char> buf_start : byte_count(buf_len),
                                  size_t buf_len) {
@@ -1432,7 +1434,7 @@ static int append_indent(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start 
  * I do not see a real danger here.
  */
 static int append_string(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
-const char* string : itype(_Nt_array_ptr<const char>),
+const char* string : itype(_TNt_array_ptr<const char>),
                          _TNt_array_ptr<char> buf_start : byte_count(buf_len),
                          size_t buf_len) {
     size_t len = strlen(string);
@@ -1441,9 +1443,9 @@ const char* string : itype(_Nt_array_ptr<const char>),
     }
 
     // TODO: This does not go through properly if bounded string is a const char, as it should be
-    _Array_ptr<char> boundedString : count(len) = NULL;
+    _TArray_ptr<char> boundedString : count(len) = NULL;
     _Unchecked {
-        boundedString = _Assume_bounds_cast<_Array_ptr<char>>(string, count(len));
+        boundedString = _Tainted_Assume_bounds_cast<_TArray_ptr<char>>(string, count(len));
     }
     _Dynamic_check(buf >= buf_start && buf + len < buf_start + buf_len);
     _TNt_array_ptr<char> buf_tmp : count(len) = _Tainted_Dynamic_bounds_cast<_TNt_array_ptr<char>>(buf, count(len));
@@ -1530,7 +1532,7 @@ _Mirror _TPtr<TJSON_Value> json_object_get_value  (_TPtr<const TJSON_Object> obj
     if (object == NULL || name == NULL) {
         return NULL;
     }
-    size_t nameLen = strlen(name);
+    size_t nameLen = t_strlen(name);
     _TNt_array_ptr<const char> name_with_len : count(nameLen) = NULL;
     _Unchecked {
         name_with_len = _Tainted_Assume_bounds_cast<_TNt_array_ptr<const char>>(name, count(nameLen));
@@ -1564,25 +1566,25 @@ _TPtr<TJSON_Array> json_object_get_array  (_TPtr<const TJSON_Object> object, _TN
 /*
  * No uncheckedness.
  */
-int json_object_get_boolean(_TPtr<const TJSON_Object>, _TNt_array_ptr<const char> name) {
+int json_object_get_boolean(_TPtr<const TJSON_Object> object, _TNt_array_ptr<const char> name) {
     return json_value_get_boolean(json_object_get_value(object, name));
 }
 /*
  * Just using an already fetched value. Hence, I see no real harm here
  */
-_TPtr<TJSON_Value> json_object_dotget_value  (_TPtr<const TJSON_Object> object , _Nt_array_ptr<const char> name) {
-    _Nt_array_ptr<const char> dot_position = strchr(name, '.');
+_Mirror _TPtr<TJSON_Value> json_object_dotget_value  (_TPtr<const TJSON_Object> object , _TNt_array_ptr<const char> name) {
+    _TNt_array_ptr<const char> dot_position = t_strchr(name, '.');
     if (!dot_position) {
         return json_object_get_value(object, name);
     }
-    _Nt_array_ptr<const char> after_dot : count((size_t)(dot_position - name)) = NULL;
+    _TNt_array_ptr<const char> after_dot : count((size_t)(dot_position - name)) = NULL;
     _Unchecked {
-        after_dot = _Assume_bounds_cast<_Nt_array_ptr<const char>>(name, count((size_t)(dot_position - name)));
+        after_dot = _Tainted_Assume_bounds_cast<_TNt_array_ptr<const char>>(name, count((size_t)(dot_position - name)));
     }
     object = json_value_get_object(json_object_getn_value(object, after_dot, (size_t)(dot_position - name)));
-    _Nt_array_ptr<const char> one_past_dot : count(0) = NULL;
+    _TNt_array_ptr<const char> one_past_dot : count(0) = NULL;
     _Unchecked {
-        one_past_dot = _Assume_bounds_cast<_Nt_array_ptr<const char>>(dot_position + 1, count(0));
+        one_past_dot = _Tainted_Assume_bounds_cast<_TNt_array_ptr<const char>>(dot_position + 1, count(0));
     }
     return json_object_dotget_value(object, one_past_dot);
 }
@@ -1591,7 +1593,7 @@ _TNt_array_ptr<const char> json_object_dotget_string(_TPtr<const TJSON_Object> o
     return json_value_get_string(json_object_dotget_value(object, name));
 }
 
-_Mirror double json_object_dotget_number (_TPtr<const TJSON_Object> object, _Nt_array_ptr<const char> name) {
+_Mirror double json_object_dotget_number (_TPtr<const TJSON_Object> object, _TNt_array_ptr<const char> name) {
     return json_value_get_number(json_object_dotget_value(object, name));
 }
 
@@ -1599,15 +1601,15 @@ _TPtr<TJSON_Object> json_object_dotget_object(_TPtr<const TJSON_Object> object ,
     return json_value_get_object(json_object_dotget_value(object, name));
 }
 
-_Mirror _TPtr<TJSON_Array> json_object_dotget_array  (_TPtr<const TJSON_Object> object, _Nt_array_ptr<const char> name ) {
+_Mirror _TPtr<TJSON_Array> json_object_dotget_array  (_TPtr<const TJSON_Object> object, _TNt_array_ptr<const char> name ) {
     return json_value_get_array(json_object_dotget_value(object, name));
 }
 
-int json_object_dotget_boolean(_TPtr<const TJSON_Object> object , _Nt_array_ptr<const char>name) {
+int json_object_dotget_boolean(_TPtr<const TJSON_Object> object , _TNt_array_ptr<const char>name) {
     return json_value_get_boolean(json_object_dotget_value(object, name));
 }
 
-size_t json_object_get_count   (_TPtr<const TJSON_Object>object){
+_Mirror size_t json_object_get_count   (_TPtr<const TJSON_Object>object){
     return object ? object->count : 0;
 }
 
@@ -1638,17 +1640,18 @@ int json_object_has_value_of_type(_TPtr<const TJSON_Object>object, _TNt_array_pt
     return val != NULL && json_value_get_type(val) == type;
 }
 
-int json_object_dothas_value (_TPtr<const TJSON_Object> object, _Nt_array_ptr<const char> name) {
+int json_object_dothas_value (_TPtr<const TJSON_Object> object, _TNt_array_ptr<const char> name) {
     return json_object_dotget_value(object, name) != NULL;
 }
 
-int json_object_dothas_value_of_type(_TPtr<const TJSON_Object> object, _Nt_array_ptr<const char> name, JSON_Value_Type type) {
+int json_object_dothas_value_of_type(_TPtr<const TJSON_Object> object, _TNt_array_ptr<const char> name, JSON_Value_Type type) {
     _TPtr<TJSON_Value> val = json_object_dotget_value(object, name);
     return val != NULL && json_value_get_type(val) == type;
 }
 
 /* JSON Array API */
-JSON_Value * json_array_get_value(const JSON_Array *array : itype(_Ptr<const JSON_Array>), size_t index) : itype(_TPtr<TJSON_Value>) {
+_Mirror _TPtr<TJSON_Value> json_array_get_value  (_TPtr<const TJSON_Array> array, size_t index)
+{
     if (array == NULL || index >= json_array_get_count(array)) {
         return NULL;
     }
@@ -1663,7 +1666,7 @@ double        json_array_get_number (_TPtr<const TJSON_Array>array, size_t index
     return json_value_get_number(json_array_get_value(array, index));
 }
 
-_TPtr<JSON_Object>  json_array_get_object (_TPtr<const TJSON_Array> array, size_t index) {
+_TPtr<TJSON_Object>  json_array_get_object (_TPtr<const TJSON_Array> array, size_t index) {
     return json_value_get_object(json_array_get_value(array, index));
 }
 
@@ -1675,7 +1678,7 @@ int json_array_get_boolean(_TPtr<const TJSON_Array>array, size_t index){
     return json_value_get_boolean(json_array_get_value(array, index));
 }
 
-size_t json_array_get_count  (_TPtr<const TJSON_Array> array) {
+_Mirror size_t json_array_get_count  (_TPtr<const TJSON_Array> array) {
     return array ? array->count : 0;
 }
 
@@ -1688,7 +1691,7 @@ _Mirror JSON_Value_Type json_value_get_type   (_TPtr<const TJSON_Value> value){
     return value ? value->type : JSONError;
 }
 
-_Mirror _TPtr<JSON_Object> json_value_get_object(_TPtr<const JSON_Value> value) {
+_Mirror _TPtr<TJSON_Object> json_value_get_object(_TPtr<const TJSON_Value> value) {
     return json_value_get_type(value) == JSONObject ? value->value.object : NULL;
 }
 
@@ -1697,22 +1700,22 @@ return value ? value->type : JSONError;
 }
 
 _Tainted _TPtr<TJSON_Object> json_value_get_object_tainted(_TPtr<const TJSON_Value> value) {
-return json_value_get_type_tainted(value) == TJSONObject ? value->value.object : NULL;
+return json_value_get_type_tainted(value) == JSONObject ? value->value.object : NULL;
 }
 
 _TPtr<TJSON_Array> json_value_get_array  (_TPtr<const TJSON_Value> value) {
     return json_value_get_type(value) == JSONArray ? value->value.array : NULL;
 }
 
-_TNt_array_ptr<const char>json_value_get_string (_TPtr<const TJSON_Value> value) {
+_Mirror _TNt_array_ptr<const char>json_value_get_string (_TPtr<const TJSON_Value> value) {
     return json_value_get_type(value) == JSONString ? value->value.string : NULL;
 }
 
-double json_value_get_number(const JSON_Value *value : itype(_Ptr<const JSON_Value>)) {
+_Mirror double json_value_get_number (_TPtr<const TJSON_Value> value) {
     return json_value_get_type(value) == JSONNumber ? value->value.number : 0;
 }
 
-int             json_value_get_boolean(_TPtr<const TJSON_Value> value){
+_Mirror int             json_value_get_boolean(_TPtr<const TJSON_Value> value){
     return json_value_get_type(value) == JSONBoolean ? value->value.boolean : -1;
 }
 
@@ -1743,7 +1746,7 @@ void json_value_free(_TPtr<TJSON_Value> value) {
 /*
  * No Uncheckedness
  */
-_TPtr<TJSON_Value> json_value_init_object (void) {
+_Tainted _TPtr<TJSON_Value> json_value_init_object (void) {
     _TPtr<TJSON_Value> new_value = parson_tainted_malloc(TJSON_Value, sizeof(TJSON_Value));
     if (!new_value) {
         return NULL;
@@ -1752,7 +1755,7 @@ _TPtr<TJSON_Value> json_value_init_object (void) {
     new_value->type = JSONObject;
     new_value->value.object = json_object_init(new_value);
     if (!new_value->value.object) {
-        parson_tainted_free(JSON_Value, new_value);
+        parson_tainted_free(TJSON_Value, new_value);
         return NULL;
     }
     return new_value;
@@ -1760,8 +1763,8 @@ _TPtr<TJSON_Value> json_value_init_object (void) {
 /*
  * No Uncheckedness
  */
-JSON_Value * json_value_init_array(void) : itype(_TPtr<TJSON_Value>) {
-    _TPtr<TJSON_Value> new_value = parson_malloc(JSON_Value, sizeof(JSON_Value));
+_Tainted _TPtr<TJSON_Value> json_value_init_array  (void) {
+    _TPtr<TJSON_Value> new_value = parson_tainted_malloc(TJSON_Value, sizeof(TJSON_Value));
     if (!new_value) {
         return NULL;
     }
@@ -1769,7 +1772,7 @@ JSON_Value * json_value_init_array(void) : itype(_TPtr<TJSON_Value>) {
     new_value->type = JSONArray;
     new_value->value.array = json_array_init(new_value);
     if (!new_value->value.array) {
-        parson_free(JSON_Value, new_value);
+        parson_tainted_free(TJSON_Value, new_value);
         return NULL;
     }
     return new_value;
@@ -1784,7 +1787,7 @@ _TPtr<TJSON_Value> json_value_init_string (_TNt_array_ptr<const char> string) {
     if (string == NULL) {
         return NULL;
     }
-    string_len = strlen(string);
+    string_len = t_strlen(string);
     _TNt_array_ptr<const char> str_with_len : count(string_len) = NULL;
     _Unchecked {
         str_with_len = _Tainted_Assume_bounds_cast<_TNt_array_ptr<const char>>(string, count(string_len));
@@ -1805,8 +1808,8 @@ _TPtr<TJSON_Value> json_value_init_string (_TNt_array_ptr<const char> string) {
 /*
  * No Uncheckedness
  */
-_Mirror JSON_Value * json_value_init_number(double number) : itype(_TPtr<TJSON_Value>) {
-    _TPtr<TJSON_Value> new_value =  parson_malloc(JSON_Value, sizeof(JSON_Value));
+_Tainted _TPtr<TJSON_Value> json_value_init_number (double number) {
+    _TPtr<TJSON_Value> new_value =  parson_tainted_malloc(TJSON_Value, sizeof(JSON_Value));
     if (IS_NUMBER_INVALID(number)) {
         return NULL;
     }
@@ -1822,7 +1825,7 @@ _Mirror JSON_Value * json_value_init_number(double number) : itype(_TPtr<TJSON_V
  * No Uncheckedness
  */
 _Mirror _TPtr<TJSON_Value> json_value_init_boolean(int boolean){
-    _TPtr<TJSON_Value> new_value = parson_malloc(JSON_Value, sizeof(JSON_Value));
+    _TPtr<TJSON_Value> new_value = parson_tainted_malloc(TJSON_Value, sizeof(JSON_Value));
     if (!new_value) {
         return NULL;
     }
@@ -1834,8 +1837,8 @@ _Mirror _TPtr<TJSON_Value> json_value_init_boolean(int boolean){
 /*
  * No Uncheckedness
  */
-_TPtr<TJSON_Value> json_value_init_null   (void) {
-    _TPtr<TJSON_Value> new_value = parson_malloc(JSON_Value, sizeof(JSON_Value));
+_Tainted _TPtr<TJSON_Value> json_value_init_null   (void) {
+    _TPtr<TJSON_Value> new_value = parson_tainted_malloc(TJSON_Value, sizeof(JSON_Value));
     if (!new_value) {
         return NULL;
     }
@@ -1912,13 +1915,13 @@ _TPtr<TJSON_Value> json_value_deep_copy   (_TPtr<const TJSON_Value> value) {
             if (temp_string == NULL) {
                 return NULL;
             }
-            temp_string_copy = parson_strdup(temp_string);
+            temp_string_copy = tainted_parson_strdup(temp_string);
             if (temp_string_copy == NULL) {
                 return NULL;
             }
             return_value = json_value_init_string_no_copy(temp_string_copy);
             if (return_value == NULL) {
-                parson_free(char, temp_string_copy);
+                parson_tainted_free(char, temp_string_copy);
             }
             return return_value;
         case JSONNull:
@@ -1933,7 +1936,12 @@ _TPtr<TJSON_Value> json_value_deep_copy   (_TPtr<const TJSON_Value> value) {
  * No Uncheckedness
  */
 size_t      json_serialization_size(_TPtr<const TJSON_Value> value) {
-    char num_buf _Nt_checked[NUM_BUF_SIZE]; /* recursively allocating buffer on stack is a bad idea, so done statically */
+    //char num_buf _Nt_checked[NUM_BUF_SIZE]; /* recursively allocating buffer on stack is a bad idea, so done statically */
+    /*
+     * Since stack does not offer a seperate partition for tainted memory
+     * num_buf has to be a tainted pointer into the tainted region
+     */
+    _TNt_array_ptr<char> num_buf= parson_string_tainted_malloc(NUM_BUF_SIZE);
     /*
     * Tainted Marshalling Needed here
     */
@@ -1943,7 +1951,7 @@ size_t      json_serialization_size(_TPtr<const TJSON_Value> value) {
 /*
  * No Uncheckedness
  */
-JSON_Status json_serialize_to_buffer(_TPtr<const TJSON_Value> value, _TNt_array_ptr<const char> buf : byte_count(buf_size_in_bytes), size_t buf_size_in_bytes) {
+JSON_Status json_serialize_to_buffer(_TPtr<const TJSON_Value> value, _TNt_array_ptr<char> buf : byte_count(buf_size_in_bytes), size_t buf_size_in_bytes) {
     int written = -1;
     size_t needed_size_in_bytes = json_serialization_size(value);
     if (needed_size_in_bytes == 0 || buf_size_in_bytes < needed_size_in_bytes) {
@@ -1963,72 +1971,13 @@ JSON_Status json_serialize_to_buffer(_TPtr<const TJSON_Value> value, _TNt_array_
 /*
  * _Tainted
  */
-_Tainted JSON_Status json_serialize_to_buffer_pretty(_TPtr<const TJSON_Value> value, _TNt_array_ptr<const char> buf : byte_count(buf_size_in_bytes), size_t buf_size_in_bytes) {
-    JSON_Status return_code = JSONSuccess;
-    _Ptr<FILE> fp = NULL;
-    _Nt_array_ptr<char> serialized_string = json_serialize_to_string(value);
-    if (serialized_string == NULL) {
-        return JSONFailure;
-    }
-    fp = fopen(filename, "w");
-    if (fp == NULL) {
-        json_free_serialized_string(serialized_string);
-        return JSONFailure;
-    }
-    if (fputs(serialized_string, fp) == EOF) {
-        return_code = JSONFailure;
-    }
-    if (fclose(fp) == EOF) {
-        return_code = JSONFailure;
-    }
-    json_free_serialized_string(serialized_string);
-    return return_code;
-}
-/*
- * No Uncheckedness
- */
-_TNt_array_ptr<const char>      json_serialize_to_string(_TPtr<const TJSON_Value> value) {
-    JSON_Status serialization_result = JSONFailure;
-    size_t buf_size_bytes = json_serialization_size(value);
-    _Nt_array_ptr<char> buf : byte_count(buf_size_bytes) = NULL;
-    if (buf_size_bytes == 0) {
-        return NULL;
-    }
-    buf = parson_string_malloc(buf_size_bytes);
-    if (buf == NULL) {
-        return NULL;
-    }
-    serialization_result = json_serialize_to_buffer(value, buf, buf_size_bytes);
-    if (serialization_result == JSONFailure) {
-        json_free_serialized_string(_Dynamic_bounds_cast<_Nt_array_ptr<char>>(buf, count(0)));
-        return NULL;
-    }
-    return buf;
-}
-/*
- * No Uncheckedness
- */
-size_t      json_serialization_size_pretty(_TPtr<const TJSON_Value> value) {
-    char num_buf _Nt_checked[NUM_BUF_SIZE]; /* recursively allocating buffer on stack is a bad idea, so let's do it only once */
-/*
-* Tainted Marshalling Needed here
-*/
-    int res = json_serialize_to_buffer_r((_TPtr<const TJSON_Value>)value, NULL, 0, 1, num_buf, NULL, 0);
-    return res < 0 ? 0 : (size_t)(res + 1);
-}
-/*
- * No Uncheckedness
- */
-JSON_Status json_serialize_to_buffer_pretty(_TPtr<const TJSON_Value> value, _TNt_array_ptr<const char> buf : byte_count(buf_size_in_bytes), size_t buf_size_in_bytes) {
+_Tainted JSON_Status json_serialize_to_buffer_pretty(_TPtr<const TJSON_Value> value, _TNt_array_ptr<char> buf : byte_count(buf_size_in_bytes), size_t buf_size_in_bytes) {
     int written = -1;
     size_t needed_size_in_bytes = json_serialization_size_pretty(value);
     if (needed_size_in_bytes == 0 || buf_size_in_bytes < needed_size_in_bytes) {
         return JSONFailure;
     }
-    /*
-     * Tainted Marshalling Needed here
-     */
-    written = json_serialize_to_buffer_r((_TPtr<const TJSON_Value>)value, buf, 0, 1, NULL, buf, buf_size_in_bytes);
+    written = json_serialize_to_buffer_r(value, buf, 0, 1, NULL, buf, buf_size_in_bytes);
     if (written < 0) {
         buf[0] = '\0';
         return JSONFailure;
@@ -2039,19 +1988,52 @@ JSON_Status json_serialize_to_buffer_pretty(_TPtr<const TJSON_Value> value, _TNt
 /*
  * No Uncheckedness
  */
-JSON_Status json_serialize_to_file_pretty(_TPtr<const TJSON_Value> value, _TNt_array_ptr<const char> filename) {
+_TNt_array_ptr<char>      json_serialize_to_string(_TPtr<const TJSON_Value> value) {
+    JSON_Status serialization_result = JSONFailure;
+    size_t buf_size_bytes = json_serialization_size(value);
+    _TNt_array_ptr<char> buf : byte_count(buf_size_bytes) = NULL;
+    if (buf_size_bytes == 0) {
+        return NULL;
+    }
+    buf = parson_string_tainted_malloc(buf_size_bytes);
+    if (buf == NULL) {
+        return NULL;
+    }
+    serialization_result = json_serialize_to_buffer(value, buf, buf_size_bytes);
+    if (serialization_result == JSONFailure) {
+        json_free_serialized_string(_Tainted_Dynamic_bounds_cast<_TNt_array_ptr<char>>(buf, count(0)));
+        return NULL;
+    }
+    return buf;
+}
+/*
+ * No Uncheckedness
+ */
+_Tainted size_t      json_serialization_size_pretty(_TPtr<const TJSON_Value> value) {
+    //char num_buf _Nt_checked[NUM_BUF_SIZE]; /* recursively allocating buffer on stack is a bad idea, so let's do it only once */
+    /*
+     * There is no seperate partition on static space for tainted memory
+     */
+    _TNt_array_ptr<char> num_buf = parson_string_tainted_malloc(NUM_BUF_SIZE);
+    int res = json_serialize_to_buffer_r((_TPtr<const TJSON_Value>)value, NULL, 0, 1, num_buf, NULL, 0);
+    return res < 0 ? 0 : (size_t)(res + 1);
+}
+/*
+ * This can be untainted later on, once the definition for t_fopen has been written
+ */
+_Tainted JSON_Status json_serialize_to_file_pretty(_TPtr<const TJSON_Value> value, _TNt_array_ptr<const char> filename) {
     JSON_Status return_code = JSONSuccess;
     _Ptr<FILE> fp = NULL;
-    _Nt_array_ptr<char> serialized_string = json_serialize_to_string_pretty(value);
+    _TNt_array_ptr<char> serialized_string = json_serialize_to_string_pretty(value);
     if (serialized_string == NULL) {
         return JSONFailure;
     }
-    fp = fopen(filename, "w");
+    fp = fopen((char*)filename, "w");
     if (fp == NULL) {
         json_free_serialized_string(serialized_string);
         return JSONFailure;
     }
-    if (fputs(serialized_string, fp) == EOF) {
+    if (fputs((const char *)serialized_string, fp) == EOF) {
         return_code = JSONFailure;
     }
     if (fclose(fp) == EOF) {
@@ -2063,7 +2045,7 @@ JSON_Status json_serialize_to_file_pretty(_TPtr<const TJSON_Value> value, _TNt_a
 /*
  * No Uncheckedness
  */
-_TNt_array_ptr<const char> json_serialize_to_string_pretty(_TPtr<const TJSON_Value> value) {
+_Tainted _TNt_array_ptr<char> json_serialize_to_string_pretty(_TPtr<const TJSON_Value> value) {
     JSON_Status serialization_result = JSONFailure;
     size_t buf_size_bytes = json_serialization_size_pretty(value);
     _TNt_array_ptr<char> buf : byte_count(buf_size_bytes) = NULL;
@@ -2084,18 +2066,18 @@ _TNt_array_ptr<const char> json_serialize_to_string_pretty(_TPtr<const TJSON_Val
 /*
  * No Uncheckedness
  */
-void        json_free_serialized_string(_TNt_array_ptr<const char> string) {
+_Mirror void        json_free_serialized_string(_TNt_array_ptr<const char> string) {
     parson_tainted_free(char, string);
 }
 /*
  * TODO: No Real Harm Here
  */
-JSON_Status json_array_remove(_TPtr<TJSON_Array> array, size_t ix) {
+_Tainted JSON_Status json_array_remove(_TPtr<TJSON_Array> array, size_t ix) {
     size_t to_move_bytes = 0;
     if (array == NULL || ix >= json_array_get_count(array)) {
         return JSONFailure;
     }
-    json_value_free(json_array_get_value(array, ix));
+    json_value_free_tainted(json_array_get_value(array, ix));
     to_move_bytes = (json_array_get_count(array) - 1 - ix) * sizeof(_TPtr<TJSON_Value>);
     // TODO: Unchecked because memmove doesn't yet take a type argument
     _Unchecked {
