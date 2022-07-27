@@ -41,6 +41,7 @@
 #include <string_tainted.h>
 #include <stdio_tainted.h>
 #include <errno_tainted.h>
+#include <math_tainted.h>
 #pragma CHECKED_SCOPE push
 #pragma CHECKED_SCOPE on
 
@@ -49,7 +50,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include <errno.h>
 
 
@@ -71,15 +71,18 @@
 #undef malloc
 #undef free
 
+#pragma TLIB_SCOPE push
+#pragma TLIB_SCOPE on
 #if defined(isnan) && defined(isinf)
-#define IS_NUMBER_INVALID(x) (isnan((x)) || isinf((x)))
+#define IS_NUMBER_INVALID(x) (t_isnan((x)) || t_isinf((x)))
 #else
 #define IS_NUMBER_INVALID(x) (((x) * 0.0) != 0.0)
 #endif
+#pragma TLIB_SCOPE pop
 
-_Itype_for_any(T) static _Ptr<void*(size_t s)> parson_malloc : itype(_Ptr<_Array_ptr<T> (size_t s) : byte_count(s)>);
+_Itype_for_any(T) _TPtr<_TArray_ptr<T> (size_t s) : byte_count(s)> parson_tainted_malloc;
 
-_Itype_for_any(T) static _Ptr<void(void*)> parson_free : itype(_Ptr<void (_Array_ptr<T> : byte_count(0))>);
+_Itype_for_any(T) _TPtr<void (_TArray_ptr<T> : byte_count(0))> parson_tainted_free;
 
 #define parson_malloc(t, sz) (malloc<t>(sz))
 #define parson_tainted_malloc(t, sz) (t_malloc<t>(sz))
@@ -2566,13 +2569,13 @@ int             json_boolean(_TPtr<const TJSON_Value> value) {
     return json_value_get_boolean(value);
 }
 
-_Itype_for_any(T) void json_set_allocation_functions(_TPtr<_TArray_ptr<T>(size_t s) : byte_count(s)> malloc,
-_TPtr<void (_TArray_ptr<T> : byte_count(0))> free) {
+_Itype_for_any(T) void json_set_allocation_functions(_TPtr<_TArray_ptr<T>(size_t s) : byte_count(s)> malloc_fun,
+_TPtr<void (_TArray_ptr<T> : byte_count(0))> free_fun) {
     if(malloc_fun || free_fun) {
-        #undef parson_malloc
-        #undef parson_free
-        parson_malloc = malloc_fun;
-        parson_free = free_fun;
+        #undef parson_tainted_malloc
+        #undef parson_tainted_free
+        parson_tainted_malloc = malloc_fun;
+        parson_tainted_free = free_fun;
     }
     return;
 }
