@@ -1,5 +1,5 @@
 CC = /home/twinturbo/Desktop/compiler/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang
-CFLAGS = -O0 -g -Wextra -pedantic-errors
+CFLAGS = -O0 -g -Wextra -pedantic-errors -ferror-limit=100
 
 all: test
 

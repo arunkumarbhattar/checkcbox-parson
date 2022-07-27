@@ -58,7 +58,7 @@ _Tainted const enum json_value_type {
 };
 typedef int JSON_Value_Type;
 
-_Mirror const enum json_result_t {
+_Tainted const enum json_result_t {
     JSONSuccess = 0,
     JSONFailure = -1
 };
@@ -174,7 +174,7 @@ JSON_Status json_object_remove(_TPtr<TJSON_Object> object, _TNt_array_ptr<const 
 JSON_Status json_object_dotremove(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name) ;
 
 /* Removes all name-value pairs in object */
-JSON_Status json_object_clear(_TPtr<TJSON_Object> object);
+_Tainted JSON_Status json_object_clear(_TPtr<TJSON_Object> object);
 
 /*
  *JSON Array
