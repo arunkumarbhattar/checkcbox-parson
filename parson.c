@@ -176,11 +176,9 @@ _Tainted Tstruct json_array_t_t {
 };
 
 /* Various */
-static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename);
-static void                remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<const char> start_token, _Nt_array_ptr<const char> end_token);
-static _Nt_array_ptr<char> parson_strndup(_Nt_array_ptr<const char> string : count(n), size_t n);
-static _Nt_array_ptr<char> parson_strdup(_Nt_array_ptr<const char> string);
-static int                 hex_char_to_int(char c);
+_Tainted static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename);
+_Mirror static void remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<const char> start_token, _Nt_array_ptr<const char> end_token);
+_Mirror static int                 hex_char_to_int(char c);
 static int _Unchecked      parse_utf16_hex(const char* string, unsigned int* result);
 static int                 num_bytes_in_utf8_sequence(unsigned char c);
 _Tainted static int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> s, _TPtr<int> len); // len is set after, not a constraint on string
@@ -253,25 +251,6 @@ _Tainted static _TNt_array_ptr<char> tainted_parson_strndup(_TNt_array_ptr<const
     output_string[n] = '\0';
     strncpy((char*)output_string,(char*) string, n);
     return output_string;
-}
-
-static _Nt_array_ptr<char> parson_strndup(_Nt_array_ptr<const char> string : count(n), size_t n) {
-    _Nt_array_ptr<char> output_string : count(n) = parson_string_malloc(n);
-    if (!output_string) {
-        return NULL;
-    }
-    output_string[n] = '\0';
-    strncpy(output_string, string, n);
-    return output_string;
-}
-
-static _Nt_array_ptr<char> parson_strdup(_Nt_array_ptr<const char> string) {
-    size_t len = strlen(string);
-    _Nt_array_ptr<const char> str_with_len : count(len) = NULL;
-    _Unchecked {
-        str_with_len = _Assume_bounds_cast<_Nt_array_ptr<const char>>(string, count(len));
-    }
-    return parson_strndup(str_with_len, len);
 }
 
 _Tainted static _TNt_array_ptr<char> tainted_parson_strdup(_TNt_array_ptr<const char> string) {
