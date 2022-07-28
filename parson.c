@@ -73,7 +73,7 @@
 
 #pragma TLIB_SCOPE push
 #pragma TLIB_SCOPE on
-#if defined(isnan) && defined(isinf)
+#if defined(t_isnan) && defined(t_isinf)
 #define IS_NUMBER_INVALID(x) (t_isnan((x)) || t_isinf((x)))
 #else
 #define IS_NUMBER_INVALID(x) (((x) * 0.0) != 0.0)
@@ -176,11 +176,9 @@ _Tainted Tstruct json_array_t_t {
 };
 
 /* Various */
-static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename);
-static void                remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<const char> start_token, _Nt_array_ptr<const char> end_token);
-static _Nt_array_ptr<char> parson_strndup(_Nt_array_ptr<const char> string : count(n), size_t n);
-static _Nt_array_ptr<char> parson_strdup(_Nt_array_ptr<const char> string);
-static int                 hex_char_to_int(char c);
+_Tainted static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename);
+_Mirror static void remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<const char> start_token, _Nt_array_ptr<const char> end_token);
+_Mirror static int                 hex_char_to_int(char c);
 static int _Unchecked      parse_utf16_hex(const char* string, unsigned int* result);
 static int                 num_bytes_in_utf8_sequence(unsigned char c);
 _Tainted static int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> s, _TPtr<int> len); // len is set after, not a constraint on string
@@ -235,8 +233,7 @@ _Tainted static int            json_serialize_string(_TNt_array_ptr<const char> 
 static int _Mirror _Unchecked append_indent(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
                                     int level, _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
 static int _Mirror _Unchecked append_string(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
-const char* string : itype(_TNt_array_ptr<const char>),
-                                            _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
+const char* string, _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
 
 /* Various */
 
@@ -253,25 +250,6 @@ _Tainted static _TNt_array_ptr<char> tainted_parson_strndup(_TNt_array_ptr<const
     output_string[n] = '\0';
     strncpy((char*)output_string,(char*) string, n);
     return output_string;
-}
-
-static _Nt_array_ptr<char> parson_strndup(_Nt_array_ptr<const char> string : count(n), size_t n) {
-    _Nt_array_ptr<char> output_string : count(n) = parson_string_malloc(n);
-    if (!output_string) {
-        return NULL;
-    }
-    output_string[n] = '\0';
-    strncpy(output_string, string, n);
-    return output_string;
-}
-
-static _Nt_array_ptr<char> parson_strdup(_Nt_array_ptr<const char> string) {
-    size_t len = strlen(string);
-    _Nt_array_ptr<const char> str_with_len : count(len) = NULL;
-    _Unchecked {
-        str_with_len = _Assume_bounds_cast<_Nt_array_ptr<const char>>(string, count(len));
-    }
-    return parson_strndup(str_with_len, len);
 }
 
 _Tainted static _TNt_array_ptr<char> tainted_parson_strdup(_TNt_array_ptr<const char> string) {
@@ -366,19 +344,19 @@ _Tainted static int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> s, 
         }
     }
 
-    /* overlong encodings */
+    //    /* overlong encodings */
     if ((cp < 0x80    && *len > 1) ||
         (cp < 0x800   && *len > 2) ||
         (cp < 0x10000 && *len > 3)) {
         return 0;
     }
 
-    /* invalid unicode */
+//    /* invalid unicode */
     if (cp > 0x10FFFF) {
         return 0;
     }
 
-    /* surrogate halves */
+//    /* surrogate halves */
     if (cp >= 0xD800 && cp <= 0xDFFF) {
         return 0;
     }
@@ -851,7 +829,7 @@ _TNt_array_ptr<char> processed) {
         processed_ptr[2] = (((cp >> 6)  & 0x3F) | 0x80); /* 10xxxxxx */
         processed_ptr[3] = (((cp)       & 0x3F) | 0x80); /* 10xxxxxx */
         processed_ptr += 3;
-    } else { /* trail surrogate before lead surrogate */
+    } else {
         return JSONFailure;
     }
     unprocessed_ptr += 3;
@@ -1203,25 +1181,16 @@ _Tainted static int json_serialize_to_buffer_r(_TPtr<const TJSON_Value> value,
     _TPtr<TJSON_Value> temp_value = NULL;
     _TPtr<TJSON_Array> array = NULL;
     _TPtr<TJSON_Object> object = NULL;
-    /*
-     * Marshalling snippet
-     */
+
     size_t i = 0, count = 0;
     double num = 0.0;
     int written = -1, written_total = 0;
-    /*
-     * Expose the function --> json_value_get_type --> as a callback
-     */
+
     switch (json_value_get_type(value)) {
         case JSONArray:
-            /*
-             * We will expose this as a _Mirror
-             * Marshalling needed
-             */
+
             array = json_value_get_array(value);
-            /*
-            * We will expose this as a callback
-            */
+
             count = json_array_get_count(array);
             APPEND_STRING("[");
             if (count > 0 && is_pretty) {
@@ -1325,7 +1294,12 @@ _Tainted static int json_serialize_to_buffer_r(_TPtr<const TJSON_Value> value,
             num = json_value_get_number(value);
             _Unchecked {
                 if (buf != NULL) {
-                    num_buf = _Tainted_Assume_bounds_cast<_TNt_array_ptr<char>>((_TNt_array_ptr<char>)buf, count(0));
+                    /*
+                     * DO NOT PERFORM CASTS INSIDE THE CHECKCBOX TYPE CASTS
+                     * C4 CANT DETONATE
+                     */
+                    _TNt_array_ptr<char> temp_buf = (_TNt_array_ptr<char>)buf;
+                    num_buf = _Tainted_Assume_bounds_cast<_TNt_array_ptr<char>>(temp_buf, count(0));
                 }
                 written = t_sprintf(num_buf, FLOAT_FORMAT, num);
             }
@@ -1379,12 +1353,7 @@ _Tainted static int json_serialize_string(_TNt_array_ptr<const char> str_unbound
             case '\x05': APPEND_STRING("\\u0005"); break;
             case '\x06': APPEND_STRING("\\u0006"); break;
             case '\x07': APPEND_STRING("\\u0007"); break;
-            /* '\x08' duplicate: '\b' */
-            /* '\x09' duplicate: '\t' */
-            /* '\x0a' duplicate: '\n' */
             case '\x0b': APPEND_STRING("\\u000b"); break;
-            /* '\x0c' duplicate: '\f' */
-            /* '\x0d' duplicate: '\r' */
             case '\x0e': APPEND_STRING("\\u000e"); break;
             case '\x0f': APPEND_STRING("\\u000f"); break;
             case '\x10': APPEND_STRING("\\u0010"); break;
@@ -1410,7 +1379,7 @@ _Tainted static int json_serialize_string(_TNt_array_ptr<const char> str_unbound
                     APPEND_STRING("/");
                 }
                 break;
-            default: /*HACK for C3*/
+            default:
                     if (buf != NULL) {
                         buf[0] = c;
                         buf += 1;
@@ -1441,7 +1410,7 @@ static int append_indent(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start 
  * I do not see a real danger here.
  */
 static int append_string(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
-const char* string : itype(_TNt_array_ptr<const char>),
+const char* string,
                          _TNt_array_ptr<char> buf_start : byte_count(buf_len),
                          size_t buf_len) {
     size_t len = strlen(string);
@@ -1454,9 +1423,7 @@ const char* string : itype(_TNt_array_ptr<const char>),
     _Unchecked {
         boundedString = _Assume_bounds_cast<_Array_ptr<char>>(string, count(len));
     }
-    /*
-     * Marshalling
-     */
+
     _TArray_ptr<char> tainted_bounded_string : count(len) = parson_string_tainted_malloc(len*sizeof(char));
     t_strncpy(tainted_bounded_string, string, len);
     _Dynamic_check(buf >= buf_start && buf + len < buf_start + buf_len);
