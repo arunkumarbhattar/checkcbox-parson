@@ -59,7 +59,7 @@
 
 #define STARTING_CAPACITY 16
 #define MAX_NESTING       1000
-
+# define _t_errno (*__t_errno_location ())
 #define FLOAT_FORMAT "%1.17g" /* do not increase precision without incresing NUM_BUF_SIZE */
 #define NUM_BUF_SIZE 64 /* double printed with "%1.17g" shouldn't be longer than 25 bytes so let's be paranoid and use 64 */
 
@@ -114,37 +114,6 @@ static int parson_escape_slashes = 1;
 #define IS_CONT(b) (((unsigned char)(b) & 0xC0) == 0x80) /* is utf-8 continuation byte */
 
 /* Type definitions */
-typedef struct json_value_value {
-    char        *string : itype(_Nt_array_ptr<char>);
-    double       number;
-    JSON_Object *object : itype(_Ptr<JSON_Object>);
-    JSON_Array  *array  : itype(_Ptr<JSON_Array>);
-    int          boolean;
-    int          null;
-} JSON_Value_Value;
-
-struct json_value_t {
-    JSON_Value      *parent : itype(_Ptr<JSON_Value>);
-    JSON_Value_Type  type;
-    JSON_Value_Value value;
-};
-
-struct json_object_t {
-    JSON_Value  *wrapping_value : itype(_Ptr<JSON_Value>);
-    char       **names          : itype(_Array_ptr<_Nt_array_ptr<char>>) count(capacity);
-    JSON_Value **values         : itype(_Array_ptr<_Ptr<JSON_Value>>)    count(capacity);
-    size_t       count;
-    size_t       capacity;
-};
-
-struct json_array_t {
-    JSON_Value  *wrapping_value : itype(_Ptr<JSON_Value>);
-    JSON_Value **items          : itype(_Array_ptr<_Ptr<JSON_Value>>) count(capacity);
-    size_t       count;
-    size_t       capacity;
-};
-
-/* Type definitions */
 typedef _Tainted Tstruct json_value_value_t_t {
     _TNt_array_ptr<char> string;
     double       number;
@@ -175,6 +144,7 @@ _Tainted Tstruct json_array_t_t {
     size_t       capacity;
 };
 
+_Tainted _TPtr<int> global_var = NULL;
 /* Various */
 _Tainted static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename);
 _Mirror static void remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<const char> start_token, _Nt_array_ptr<const char> end_token);
@@ -484,7 +454,7 @@ _Mirror static void remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<co
 /*
  */
 _Tainted static _TPtr<TJSON_Object> json_object_init(_TPtr<TJSON_Value> wrapping_value_ip) {
-    _TPtr<TJSON_Object> new_obj = parson_tainted_malloc(TJSON_Object, sizeof(JSON_Object));
+    _TPtr<TJSON_Object> new_obj = parson_tainted_malloc(TJSON_Object, sizeof(TJSON_Object));
     _TPtr<int> g = parson_tainted_malloc(int, sizeof(int));
     *g = 10;
     if (new_obj == NULL) {
@@ -559,7 +529,7 @@ _Tainted static JSON_Status json_object_resize(_TPtr<TJSON_Object> object, size_
         if (temp_names == NULL) {
             return JSONFailure;
         }
-        JSON_Value** temp_values = (JSON_Value**)parson_tainted_malloc(TJSON_Value*, new_capacity * sizeof(TJSON_Value*));
+        TJSON_Value** temp_values = (TJSON_Value**)parson_tainted_malloc(TJSON_Value*, new_capacity * sizeof(TJSON_Value*));
         if (temp_values == NULL) {
             parson_free_unchecked((_TArray_ptr<void>)temp_names);
             return JSONFailure;
@@ -574,7 +544,7 @@ _Tainted static JSON_Status json_object_resize(_TPtr<TJSON_Object> object, size_
         *  This reasoning applies to both memcpy functions below. */
         if (object->names != NULL && object->values != NULL && object->count > 0) {
             t_memcpy((_TArray_ptr<void>)temp_names, object->names, object->count * sizeof(char*));
-            t_memcpy((_TArray_ptr<void>)temp_values, object->values, object->count * sizeof(JSON_Value*));
+            t_memcpy((_TArray_ptr<void>)temp_values, object->values, object->count * sizeof(TJSON_Value*));
         }
         parson_tainted_free(_TNt_array_ptr<char>, object->names);
         parson_tainted_free(_TPtr<TJSON_Value>, object->values);
@@ -676,7 +646,7 @@ _Tainted static void json_object_free(_TPtr<TJSON_Object> object) {
  * No Unchecked operation, hence no need to be tainted
  */
 _Tainted static _TPtr<TJSON_Array> json_array_init(_TPtr<TJSON_Value> wrapping_value) {
-    _TPtr<TJSON_Array> new_array = parson_tainted_malloc(TJSON_Array, sizeof(JSON_Array));
+    _TPtr<TJSON_Array> new_array = parson_tainted_malloc(TJSON_Array, sizeof(TJSON_Array));
     if (new_array == NULL) {
         return NULL;
     }
@@ -751,7 +721,7 @@ _Mirror static void json_array_free(_TPtr<TJSON_Array> array) {
  * But Still we are tainting it, due to its relevance
  */
 _Tainted static _TPtr<TJSON_Value> json_value_init_string_no_copy(_TNt_array_ptr<char> string) {
-    _TPtr<TJSON_Value> new_value = (_TPtr<TJSON_Value>)parson_tainted_malloc(TJSON_Value, sizeof(JSON_Value));
+    _TPtr<TJSON_Value> new_value = (_TPtr<TJSON_Value>)parson_tainted_malloc(TJSON_Value, sizeof(TJSON_Value));
     if (!new_value) {
         return NULL;
     }
@@ -1789,7 +1759,7 @@ _TPtr<TJSON_Value> json_value_init_string (_TNt_array_ptr<const char> string) {
  * No Uncheckedness
  */
 _Tainted _TPtr<TJSON_Value> json_value_init_number (double number) {
-    _TPtr<TJSON_Value> new_value =  parson_tainted_malloc(TJSON_Value, sizeof(JSON_Value));
+    _TPtr<TJSON_Value> new_value =  parson_tainted_malloc(TJSON_Value, sizeof(TJSON_Value));
     if (IS_NUMBER_INVALID(number)) {
         return NULL;
     }
@@ -1805,7 +1775,7 @@ _Tainted _TPtr<TJSON_Value> json_value_init_number (double number) {
  * No Uncheckedness
  */
 _Mirror _TPtr<TJSON_Value> json_value_init_boolean(int boolean){
-    _TPtr<TJSON_Value> new_value = parson_tainted_malloc(TJSON_Value, sizeof(JSON_Value));
+    _TPtr<TJSON_Value> new_value = parson_tainted_malloc(TJSON_Value, sizeof(TJSON_Value));
     if (!new_value) {
         return NULL;
     }
@@ -1818,7 +1788,7 @@ _Mirror _TPtr<TJSON_Value> json_value_init_boolean(int boolean){
  * No Uncheckedness
  */
 _Tainted _TPtr<TJSON_Value> json_value_init_null   (void) {
-    _TPtr<TJSON_Value> new_value = parson_tainted_malloc(TJSON_Value, sizeof(JSON_Value));
+    _TPtr<TJSON_Value> new_value = parson_tainted_malloc(TJSON_Value, sizeof(TJSON_Value));
     if (!new_value) {
         return NULL;
     }

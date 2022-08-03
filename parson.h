@@ -64,6 +64,7 @@ _Tainted const enum json_result_t {
 };
 typedef int JSON_Status;
 
+_Tainted _TPtr<int> header_global_var = NULL;
 
 /* Call only once, before calling any other function from parson API. If not called, malloc and free
    from stdlib will be used for all allocations */
