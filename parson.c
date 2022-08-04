@@ -89,7 +89,7 @@ _Itype_for_any(T) _TPtr<void (_TArray_ptr<T> : byte_count(0))> parson_tainted_fr
 #define parson_free(t, p)   (free<t>(_Dynamic_bounds_cast<_Array_ptr<t>>(p, byte_count(0))))
 #define parson_tainted_free(t, p)   (t_free<t>(_Tainted_Dynamic_bounds_cast<_TArray_ptr<t>>(p, byte_count(0))))
 
-#define parson_free_unchecked(buf) (t_free(buf))
+#define parson_free_unchecked(t, buf) (t_free<t>(buf))
 
 _Tainted static _TNt_array_ptr<char> parson_string_tainted_malloc(size_t sz) : count(sz) _Unchecked{
   if(sz >= SIZE_MAX)
@@ -109,7 +109,7 @@ static _Nt_array_ptr<char> parson_string_malloc(size_t sz) : count(sz)_Unchecked
     return _Assume_bounds_cast<_Nt_array_ptr<char>>(p, count(sz));
 }
 
-static int parson_escape_slashes = 1;
+_Tainted static int parson_escape_slashes = 1;
 
 #define IS_CONT(b) (((unsigned char)(b) & 0xC0) == 0x80) /* is utf-8 continuation byte */
 
@@ -531,7 +531,7 @@ _Tainted static JSON_Status json_object_resize(_TPtr<TJSON_Object> object, size_
         }
         TJSON_Value** temp_values = (TJSON_Value**)parson_tainted_malloc(TJSON_Value*, new_capacity * sizeof(TJSON_Value*));
         if (temp_values == NULL) {
-            parson_free_unchecked((_TArray_ptr<void>)temp_names);
+            parson_free_unchecked(void, (_TArray_ptr<void>)temp_names);
             return JSONFailure;
         }
 
@@ -1364,7 +1364,7 @@ _Tainted static int json_serialize_string(_TNt_array_ptr<const char> str_unbound
 /*
  * No Unchecked-ness, so no need to perform any tainting
  */
-static int append_indent(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
+_Mirror static int append_indent(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
                          int level,
                          _TNt_array_ptr<char> buf_start : byte_count(buf_len),
                          size_t buf_len) {
@@ -1379,7 +1379,7 @@ static int append_indent(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start 
  * Very often used utility function.
  * I do not see a real danger here.
  */
-static int append_string(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
+_Mirror static int append_string(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
 const char* string,
                          _TNt_array_ptr<char> buf_start : byte_count(buf_len),
                          size_t buf_len) {
@@ -1440,7 +1440,10 @@ _Tainted _TPtr<TJSON_Value> json_parse_file_with_comments(_TNt_array_ptr<const c
  * This API is exposed to the public and reads the payload input through from the user
  * Hence this function is best suggested to be tainted
  */
-_Tainted _TPtr<TJSON_Value> json_parse_string(_TNt_array_ptr<const char> string) {
+/*
+ * parse_value is callback, hence its best suggested to be passed as an argument
+ */
+_TPtr<TJSON_Value> json_parse_string(_TNt_array_ptr<const char> string) {
     if (string == NULL) {
         return NULL;
     }
@@ -1653,7 +1656,7 @@ _Tainted _TPtr<TJSON_Object> json_value_get_object_tainted(_TPtr<const TJSON_Val
 return json_value_get_type_tainted(value) == JSONObject ? value->value.object : NULL;
 }
 
-_TPtr<TJSON_Array> json_value_get_array  (_TPtr<const TJSON_Value> value) {
+_Mirror _TPtr<TJSON_Array> json_value_get_array  (_TPtr<const TJSON_Value> value) {
     return json_value_get_type(value) == JSONArray ? value->value.array : NULL;
 }
 
