@@ -195,7 +195,7 @@ _TPtr<_TNt_array_ptr<char>(_TNt_array_ptr<const char> input : count(len),
 static _TPtr<TJSON_Value>       parse_boolean_value(_TPtr<_TNt_array_ptr<const char>> string);
 _Tainted static _TPtr<TJSON_Value> parse_number_value(_TPtr<_TNt_array_ptr<const char>> string);
 static _TPtr<TJSON_Value>       parse_null_value(_TPtr<_TNt_array_ptr<const char>> string);
-static _TPtr<TJSON_Value>       parse_value(_TPtr<_TNt_array_ptr<const char>> string, size_t nesting);
+
 
 /* Serialization */
 _Tainted static int   json_serialize_to_buffer_r(_TPtr<const TJSON_Value> value, _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len), int level, int is_pretty, _TNt_array_ptr<char> num_buf, _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
@@ -905,7 +905,7 @@ _TPtr<_TNt_array_ptr<char>(_TNt_array_ptr<const char> input : count(len), size_t
  * No Unchecked operation, hence no need to be tainted
  * This Shall be made _Callback
  */
-_Callback static _TPtr<TJSON_Value> parse_value(_TPtr<_TNt_array_ptr<const char>> string, size_t nesting) {
+_Callback _TPtr<TJSON_Value> parse_value(_TPtr<_TNt_array_ptr<const char>> string, size_t nesting) {
     if (nesting > MAX_NESTING) {
         return NULL;
     }
@@ -1426,13 +1426,14 @@ _TPtr<TJSON_Value> json_parse_file(_TNt_array_ptr<const char>filename) {
  * This API is exposed to the public and reads the payload input through from the user
  * Hence this function is best suggested to be tainted
  */
-_Tainted _TPtr<TJSON_Value> json_parse_file_with_comments(_TNt_array_ptr<const char> filename) {
+_Tainted _TPtr<TJSON_Value> json_parse_file_with_comments(_TNt_array_ptr<const char> filename,
+_TPtr<_TPtr<TJSON_Value>(_TPtr<_TNt_array_ptr<const char>>, size_t)>parse_value) {
     _TNt_array_ptr<char> file_contents = read_file((_TNt_array_ptr<const char>)filename);
     _TPtr<TJSON_Value> output_value = NULL;
     if (file_contents == NULL) {
         return NULL;
     }
-    output_value = json_parse_string_with_comments(file_contents);
+    output_value = json_parse_string_with_comments(file_contents, parse_value);
     parson_tainted_free(char, file_contents);
     return output_value;
 }
@@ -1459,7 +1460,8 @@ _TPtr<TJSON_Value> json_parse_string(_TNt_array_ptr<const char> string) {
  * This API is exposed to the public and reads the payload input through from the user
  * Hence this function is best suggested to be tainted
  */
-_Tainted _TPtr<TJSON_Value> json_parse_string_with_comments(_TNt_array_ptr<const char> string) {
+_Tainted _TPtr<TJSON_Value> json_parse_string_with_comments(_TNt_array_ptr<const char> string,
+        _TPtr<_TPtr<TJSON_Value>(_TPtr<_TNt_array_ptr<const char>>, size_t)>parse_value) {
     _TPtr<TJSON_Value> result = NULL;
     _TNt_array_ptr<char> string_mutable_copy = (_TNt_array_ptr<char>)tainted_parson_strdup(string);
     if (string_mutable_copy == NULL) {

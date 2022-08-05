@@ -79,14 +79,17 @@ _Tainted _TPtr<TJSON_Value> json_parse_file(_TNt_array_ptr<const char> filename)
 
 /* Parses first JSON value in a file and ignores comments (/ * * / and //),
    returns NULL in case of error */
-_Tainted _TPtr<TJSON_Value> json_parse_file_with_comments(_TNt_array_ptr<const char> filename);
+_Tainted _TPtr<TJSON_Value> json_parse_file_with_comments(_TNt_array_ptr<const char> filename,
+_TPtr<_TPtr<TJSON_Value>(_TPtr<_TNt_array_ptr<const char>>, size_t)>parse_value);
 
 /*  Parses first JSON value in a string, returns NULL in case of error */
 _Tainted _TPtr<TJSON_Value> json_parse_string(_TNt_array_ptr<const char> string);
 
 /*  Parses first JSON value in a string and ignores comments (/ * * / and //),
     returns NULL in case of error */
-_Tainted _TPtr<TJSON_Value> json_parse_string_with_comments(_TNt_array_ptr<const char> string);
+_Callback _TPtr<TJSON_Value>       parse_value(_TPtr<_TNt_array_ptr<const char>> string, size_t nesting);
+_Tainted _TPtr<TJSON_Value> json_parse_string_with_comments(_TNt_array_ptr<const char> string,
+_TPtr<_TPtr<TJSON_Value>(_TPtr<_TNt_array_ptr<const char>>, size_t)>parse_value);
 
 /* Serialization */
 size_t      json_serialization_size(_TPtr<const TJSON_Value> value); /* returns 0 on fail */

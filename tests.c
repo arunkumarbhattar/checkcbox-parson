@@ -125,16 +125,16 @@ void test_suite_1(void) {
     if (val_tainted) { json_value_free(val_tainted); }
 
     t_strcpy(filename,"tests/test_1_1.txt");
-    TEST((val_tainted = json_parse_file_with_comments(filename)) != NULL);
+    TEST((val_tainted = json_parse_file_with_comments(filename, &parse_value)) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
 
     t_strcpy(filename,"tests/test_1_2.txt");
-    TEST((val_tainted = json_parse_file_with_comments(filename)) == NULL); /* Over 2048 levels of nesting */
+    TEST((val_tainted = json_parse_file_with_comments(filename, &parse_value)) == NULL); /* Over 2048 levels of nesting */
     if (val_tainted) { json_value_free(val_tainted); }
     t_strcpy(filename,"tests/test_1_3.txt");
-    TEST((val_tainted = json_parse_file_with_comments(filename)) != NULL);
+    TEST((val_tainted = json_parse_file_with_comments(filename, &parse_value)) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
@@ -324,7 +324,7 @@ void test_suite_2_with_comments(void) {
     _TNt_array_ptr<char> filename = string_tainted_malloc(100*sizeof(char));
     t_strcpy(filename,"tests/test_2_comments.txt");
     _TPtr<TJSON_Value> root_value = NULL;
-    root_value = json_parse_file_with_comments(filename);
+    root_value = json_parse_file_with_comments(filename, &parse_value);
     test_suite_2(root_value);
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string(root_value))));
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string_pretty(root_value))));
