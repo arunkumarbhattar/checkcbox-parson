@@ -5,7 +5,7 @@ all: test
 
 .PHONY: compile test
 test: tests.c parson.c
-	$(CC) $(CFLAGS) -o output tests.c parson.c
+	$(CC) $(CFLAGS) -o output libSBX_CON_LIB.a tests.c parson.c
 	./output
 
 compile:
