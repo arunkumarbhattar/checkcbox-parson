@@ -91,13 +91,14 @@ int main() {
     test_suite_3();
     test_suite_4();
     test_suite_5();
+    /*
     test_suite_6();
     test_suite_7();
     test_suite_8();
     test_suite_9();
     test_suite_10();
     test_suite_11();
-
+	*/
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
     return 0;
