@@ -64,8 +64,7 @@ _Tainted const enum json_result_t {
 };
 typedef int JSON_Status;
 
-_Tainted _TPtr<int> header_global_var = NULL;
-
+_Tainted static _TNt_array_ptr<char> string_tainted_malloc(size_t sz) : count(sz);
 /* Call only once, before calling any other function from parson API. If not called, malloc and free
    from stdlib will be used for all allocations */
 _Itype_for_any(T) void json_set_allocation_functions(_TPtr<_TArray_ptr<T>(size_t s) : byte_count(s)> malloc,

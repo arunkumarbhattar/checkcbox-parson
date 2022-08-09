@@ -50,12 +50,12 @@ void test_suite_2_with_comments(void);
 void test_suite_3(void); /* Test parsing valid and invalid strings */
 void test_suite_4(void); /* Test deep copy function */
 void test_suite_5(void); /* Test building json values from scratch */
-void test_suite_6(void); /* Test value comparing verification */
-void test_suite_7(void); /* Test schema validation */
-void test_suite_8(void); /* Test serialization */
-void test_suite_9(void); /* Test serialization (pretty) */
-void test_suite_10(void); /* Testing for memory leaks */
-void test_suite_11(void); /* Additional things that require testing */
+//void test_suite_6(void); /* Test value comparing verification */
+//void test_suite_7(void); /* Test schema validation */
+//void test_suite_8(void); /* Test serialization */
+//void test_suite_9(void); /* Test serialization (pretty) */
+//void test_suite_10(void); /* Testing for memory leaks */
+//void test_suite_11(void); /* Additional things that require testing */
 
 void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
@@ -69,8 +69,7 @@ static char * read_file(const char * filename);
 
 static int tests_passed;
 static int tests_failed;
-
-_Tainted static _TNt_array_ptr<char> string_tainted_malloc(size_t sz) : count(sz) _Unchecked{
+_Tainted static _TNt_array_ptr<char> string_malloc(size_t sz) : count(sz) _Unchecked{
 if(sz >= SIZE_MAX)
 return NULL;
 _TArray_ptr<char> p : count(sz+1) = (_TArray_ptr<char>)t_malloc<char>(sz + 1);
@@ -106,7 +105,7 @@ int main() {
 
 void test_suite_1(void) {
     _TPtr<TJSON_Value> val_tainted = NULL;
-    _TNt_array_ptr<char> filename = string_tainted_malloc(sizeof("tests/test_1_1.txt"));
+    _TNt_array_ptr<char> filename = string_malloc(sizeof("tests/test_1_1.txt"));
     t_strcpy(filename,"tests/test_1_1.txt");
     TEST((val_tainted = json_parse_file(filename)) != NULL);
     /*
@@ -150,7 +149,7 @@ void test_suite_2(_TPtr<TJSON_Value> root_value) {
     TEST(json_value_get_type(root_value) == JSONObject);
     root_object = json_value_get_object(root_value);
 
-    _TNt_array_ptr<char> value_type = string_tainted_malloc(100*sizeof(char));
+    _TNt_array_ptr<char> value_type = string_malloc(100*sizeof(char));
     t_strcpy(value_type,"string");
     TEST(json_object_has_value(root_object, value_type));
     t_strcpy(value_type,"_string");
@@ -310,7 +309,7 @@ void test_suite_2(_TPtr<TJSON_Value> root_value) {
 
 void test_suite_2_no_comments(void) {
     _TPtr<TJSON_Value> val_tainted = NULL;
-    _TNt_array_ptr<char> filename = string_tainted_malloc(100*sizeof(char));
+    _TNt_array_ptr<char> filename = string_malloc(100*sizeof(char));
     t_strcpy(filename,"tests/test_2.txt");
     _TPtr<TJSON_Value> root_value = NULL;
     root_value = json_parse_file(filename);
@@ -322,7 +321,7 @@ void test_suite_2_no_comments(void) {
 
 void test_suite_2_with_comments(void) {
     _TPtr<TJSON_Value> val_tainted = NULL;
-    _TNt_array_ptr<char> filename = string_tainted_malloc(100*sizeof(char));
+    _TNt_array_ptr<char> filename = string_malloc(100*sizeof(char));
     t_strcpy(filename,"tests/test_2_comments.txt");
     _TPtr<TJSON_Value> root_value = NULL;
     root_value = json_parse_file_with_comments(filename, &parse_value);
@@ -334,7 +333,7 @@ void test_suite_2_with_comments(void) {
 
 void test_suite_3(void) {
     _TPtr<TJSON_Value> val_tainted = NULL;
-    _TNt_array_ptr<char> filename = string_tainted_malloc(100*sizeof(char));
+    _TNt_array_ptr<char> filename = string_malloc(100*sizeof(char));
 
     puts("Testing valid strings:");
     t_strcpy(filename,"{\"lorem\":\"ipsum\"}");
@@ -456,7 +455,7 @@ void test_suite_3(void) {
 
 void test_suite_4() {
     _TPtr<TJSON_Value> val_tainted = NULL;
-    _TNt_array_ptr<char> filename = string_tainted_malloc(100*sizeof(char));
+    _TNt_array_ptr<char> filename = string_malloc(100*sizeof(char));
     t_strcpy(filename,"tests/test_2.txt");
     _TPtr<TJSON_Value> a = NULL, a_copy = NULL;
     t_printf("Testing %s:\n", filename);
@@ -470,7 +469,7 @@ void test_suite_4() {
 void test_suite_5(void) {
     double zero = 0.0; /* msvc is silly (workaround for error C2124) */
 
-    _TNt_array_ptr<char> filename = string_tainted_malloc(100*sizeof(char));
+    _TNt_array_ptr<char> filename = string_malloc(100*sizeof(char));
     t_strcpy(filename,"tests/test_5.txt");
     _TPtr<TJSON_Value> val_from_file = json_parse_file(filename);
 
@@ -488,8 +487,8 @@ void test_suite_5(void) {
     obj = json_value_get_object(val);
     TEST(obj != NULL);
 
-    _TNt_array_ptr<char> string_1 = string_tainted_malloc(100*sizeof(char));
-    _TNt_array_ptr<char> string_2 = string_tainted_malloc(100*sizeof(char));
+    _TNt_array_ptr<char> string_1 = string_malloc(100*sizeof(char));
+    _TNt_array_ptr<char> string_2 = string_malloc(100*sizeof(char));
     t_strcpy(string_1,"first");
     t_strcpy(string_2,"John");
     TEST(json_object_set_string(obj, string_1, string_2) == JSONSuccess);
@@ -825,7 +824,7 @@ void print_commits_info(const char *username, const char *repo) {
     system(curl_command);
 
     /* parsing json and validating output */
-    _TNt_array_ptr<char> filename = string_tainted_malloc(100*sizeof(char));
+    _TNt_array_ptr<char> filename = string_malloc(100*sizeof(char));
     t_strcpy(filename,output_filename);
     root_value = json_parse_file(filename);
     if (json_value_get_type(root_value) != JSONArray) {
@@ -838,11 +837,11 @@ void print_commits_info(const char *username, const char *repo) {
     printf("%-10.10s %-10.10s %s\n", "Date", "SHA", "Author");
     for (i = 0; i < json_array_get_count(commits); i++) {
         commit = json_array_get_object(commits, i);
-        _TNt_array_ptr<char> string_1 = string_tainted_malloc(100*sizeof(char));
+        _TNt_array_ptr<char> string_1 = string_malloc(100*sizeof(char));
         t_strcpy(string_1,"commit.author.date");
-        _TNt_array_ptr<char> string_2 = string_tainted_malloc(100*sizeof(char));
+        _TNt_array_ptr<char> string_2 = string_malloc(100*sizeof(char));
         t_strcpy(string_2,"sha");
-        _TNt_array_ptr<char> string_3 = string_tainted_malloc(100*sizeof(char));
+        _TNt_array_ptr<char> string_3 = string_malloc(100*sizeof(char));
         t_strcpy(string_3, "commit.author.name");
 
         printf("%.10s %.10s %s\n",

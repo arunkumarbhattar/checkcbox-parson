@@ -144,7 +144,6 @@ _Tainted Tstruct json_array_t_t {
     size_t       capacity;
 };
 
-_Tainted _TPtr<int> global_var = NULL;
 /* Various */
 _Tainted static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename);
 _Mirror static void remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<const char> start_token, _Nt_array_ptr<const char> end_token);

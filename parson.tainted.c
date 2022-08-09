@@ -144,7 +144,6 @@ _Tainted Tstruct json_array_t_t {
     size_t       capacity;
 };
 
-_Tainted _TPtr<int> global_var = NULL;
 /* Various */
 _Tainted static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename);
 _Mirror static void remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<const char> start_token, _Nt_array_ptr<const char> end_token);
@@ -848,8 +847,9 @@ static _TPtr<TJSON_Value> parse_array_value(_TPtr<_TNt_array_ptr<const char>> st
 _TLIB unsigned int process_string_trampoline (unsigned int arg_1,
 unsigned long int arg_2) 
 {
-	return c_fetch_pointer_offset ((void*)
-process_string ((_TNt_array_ptr<const char>) c_fetch_pointer_from_offset(arg_1),
+  _TNt_array_ptr<const char> first_arg : count(arg_2) =
+                                             _Tainted_Assume_bounds_cast<_TNt_array_ptr<const char>>((_TNt_array_ptr<const char>) c_fetch_pointer_from_offset(arg_1), count(arg_2));
+	return c_fetch_pointer_offset ((void*)process_string (first_arg,
 (size_t) arg_2));
 }
 
