@@ -145,7 +145,7 @@ _Tainted Tstruct json_array_t_t {
 };
 
 /* Various */
-_Tainted static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename);
+static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename);
 _Mirror static void remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<const char> start_token, _Nt_array_ptr<const char> end_token);
 _Mirror static int                 hex_char_to_int(char c);
 static int _Unchecked      parse_utf16_hex(const char* string, unsigned int* result);
@@ -357,38 +357,39 @@ _Tainted static int is_decimal(_TNt_array_ptr<const char> string : count(length)
 /*
  * Should be Tainted
  */
-_Tainted static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename) {
-    _Ptr<FILE> fp = fopen((_Nt_array_ptr<const char>)filename, "r");
-    size_t size_to_read = 0;
-    size_t size_read = 0;
-    long pos;
-    
-    if (!fp) {
-        return NULL;
-    }
-    fseek(fp, 0L, SEEK_END);
-    pos = ftell(fp);
-    if (pos < 0) {
-        fclose(fp);
-        return NULL;
-    }
-    size_to_read = pos;
-    rewind(fp);
-    // TODO: compiler isn't constant folding when checking bounds, so we need the spurious (size_t) 1 here.
-    _TNt_array_ptr<char> file_contents : count((size_t) 1 * size_to_read) = parson_string_tainted_malloc((size_t) 1 * size_to_read );
-    if (!file_contents) {
-    fclose(fp);
-        return NULL;
-    }
-    size_read = fread((void *)file_contents, 1, size_to_read, fp);
-    if (size_read == 0 || ferror(fp)) {
-        fclose(fp);
-        parson_tainted_free(char, file_contents);
-        return NULL;
-    }
-    fclose(fp);
-    file_contents[size_read] = '\0';
-    return file_contents;
+static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename) _Unchecked{
+_TPtr<void> fp = t_fopen(filename, "r");
+size_t size_to_read = 0;
+size_t size_read = 0;
+long pos;
+
+if (!fp) {
+return NULL;
+}
+t_fseek(fp, 0L, SEEK_END);
+pos = t_ftell(fp);
+if (pos < 0) {
+t_fclose(fp);
+return NULL;
+}
+size_to_read = pos;
+t_rewind(fp);
+// TODO: compiler isn't constant folding when checking bounds, so we need the spurious (size_t) 1 here.
+_TNt_array_ptr<char> file_contents : count((size_t) 1 * size_to_read) = parson_string_tainted_malloc((size_t) 1 * size_to_read );
+if (!file_contents) {
+t_fclose(fp);
+return NULL;
+}
+size_read = t_fread<void>(file_contents, 1, size_to_read, fp);
+if (size_read == 0 || t_ferror(fp)) {
+t_fclose(fp);
+parson_tainted_free(char, file_contents);
+return NULL;
+}
+t_fclose(fp);
+t_strcpy(file_contents[size_read],"\0")
+//file_contents[size_read] = '\0';
+return file_contents;
 }
 /*
  * Must be Tainted, as called ONLY by tainted functions
@@ -880,7 +881,7 @@ _TPtr<_TNt_array_ptr<char>(_TNt_array_ptr<const char> input : count(len), size_t
     if (status != JSONSuccess) {
         return NULL;
     }
-    string_len = string - string_start - 2; /* length without quotes */
+    string_len = strlen(string) - strlen(string_start) - 2; /* length without quotes */
     // TODO: We can't figure this out dynamically
     _TNt_array_ptr<const char> one_past_start : count(string_len) = NULL;
     _Unchecked {

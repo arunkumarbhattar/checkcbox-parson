@@ -92,7 +92,7 @@ _Itype_for_any(T) void json_set_allocation_functions(_TPtr<_TArray_ptr<T>(size_t
 void json_set_escape_slashes(int escape_slashes);
 
 /* Parses first JSON value in a file, returns NULL in case of error */
-_Tainted _TPtr<TJSON_Value> json_parse_file(_TNt_array_ptr<const char> filename);
+_TPtr<TJSON_Value> json_parse_file(_TNt_array_ptr<const char> filename);
 
 /* Parses first JSON value in a file and ignores comments (/ * * / and //),
    returns NULL in case of error */
