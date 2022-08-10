@@ -145,7 +145,7 @@ _Tainted Tstruct json_array_t_t {
 };
 
 /* Various */
-_Tainted static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename);
+static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename);
 _Mirror static void remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<const char> start_token, _Nt_array_ptr<const char> end_token);
 _Mirror static int                 hex_char_to_int(char c);
 static int _Unchecked      parse_utf16_hex(const char* string, unsigned int* result);
@@ -319,12 +319,40 @@ _Tainted static int is_decimal(_TNt_array_ptr<const char> string : count(length)
 /*
  * Should be Tainted
  */
-_Tainted static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename) {
+static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename) _Unchecked{
+    _TPtr<void> fp = t_fopen(filename, "r");
+    size_t size_to_read = 0;
+    size_t size_read = 0;
+    long pos;
 
-
- return (_TNt_array_ptr<char>)c_fetch_pointer_from_offset(w2c_read_file( c_fetch_sandbox_address(),
- c_fetch_pointer_offset((void*)filename)));
+    if (!fp) {
+        return NULL;
+    }
+    t_fseek(fp, 0L, SEEK_END);
+    pos = t_ftell(fp);
+    if (pos < 0) {
+        t_fclose(fp);
+        return NULL;
+    }
+    size_to_read = pos;
+    t_rewind(fp);
+    // TODO: compiler isn't constant folding when checking bounds, so we need the spurious (size_t) 1 here.
+    _TNt_array_ptr<char> file_contents : count((size_t) 1 * size_to_read) = parson_string_tainted_malloc((size_t) 1 * size_to_read );
+    if (!file_contents) {
+        t_fclose(fp);
+        return NULL;
+    }
+    size_read = t_fread<void>(file_contents, 1, size_to_read, fp);
+    if (size_read == 0 || t_ferror(fp)) {
+        t_fclose(fp);
+        parson_tainted_free(char, file_contents);
+        return NULL;
+    }
+    t_fclose(fp);
+    //TODO: NEED TO NULL TERMINATE file_contents
+    return file_contents;
 }
+/*
 /*
  * Must be Tainted, as called ONLY by tainted functions
  */
@@ -668,7 +696,7 @@ error:
  * process string is exposed as a callback -->
  */
 
-_TLIB unsigned int process_string_trampoline (unsigned int arg_1,
+_TLIB unsigned int process_string_trampoline (unsigned sandbox, unsigned int arg_1,
                                               unsigned long int arg_2)
 {
     _TNt_array_ptr<const char> first_arg : count(arg_2) =
@@ -1010,7 +1038,7 @@ _TPtr<TJSON_Value> json_parse_file(_TNt_array_ptr<const char>filename) {
  * Hence this function is best suggested to be tainted
  */
 
-_TLIB unsigned int parse_value_trampoline (unsigned int arg_1,
+_TLIB unsigned int parse_value_trampoline (unsigned int sandbox, unsigned int arg_1,
 unsigned long int arg_2) 
 _Unchecked {
 _TNt_array_ptr<const char> first_arg : count(arg_2) =
