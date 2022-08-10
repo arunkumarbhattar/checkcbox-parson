@@ -74,7 +74,7 @@ if(sz >= SIZE_MAX)
 return NULL;
 _TArray_ptr<char> p : count(sz+1) = (_TArray_ptr<char>)t_malloc<char>(sz + 1);
 if (p != NULL)
-p[sz] = 0;
+    p[sz] = 0;
 return _Tainted_Assume_bounds_cast<_TNt_array_ptr<char>>(p, count(sz));
 }
 
@@ -105,8 +105,8 @@ int main() {
 
 void test_suite_1(void) {
     _TPtr<TJSON_Value> val_tainted = NULL;
-    _TNt_array_ptr<char> filename = string_malloc(sizeof("tests/test_1_1.txt"));
-    t_strcpy(filename,"tests/test_1_1.txt");
+    _TNt_array_ptr<char> filename = string_malloc(sizeof("/home/twinturbo/Desktop/checkedc-parson/tests/test_1_1.txt"));
+    t_strcpy(filename,"/home/twinturbo/Desktop/checkedc-parson/tests/test_1_1.txt");
     TEST((val_tainted = json_parse_file(filename)) != NULL);
     /*
      * Marshalling Snippet

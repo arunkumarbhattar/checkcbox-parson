@@ -102,16 +102,16 @@ unsigned long int w2c_json_value_get_type_tainted (void* sandbox, unsigned int a
 unsigned int w2c_json_value_get_object_tainted (void* sandbox, unsigned int arg_1) ;
 
 
-unsigned int w2c_json_value_init_object(void* sandbox);
+unsigned int w2c_json_value_init_object (void* sandbox);
 
 
-unsigned int w2c_json_value_init_array(void* sandbox);
+unsigned int w2c_json_value_init_array (void* sandbox);
 
 
 unsigned int w2c_json_value_init_number (void* sandbox, double arg_1) ;
 
 
-unsigned int w2c_json_value_init_null(void* sandbox);
+unsigned int w2c_json_value_init_null (void* sandbox);
 
 
 unsigned long int w2c_json_serialize_to_buffer_pretty (void* sandbox, unsigned int arg_1,
@@ -134,6 +134,4 @@ unsigned long int arg_2) ;
 
 
 unsigned long int w2c_json_object_clear (void* sandbox, unsigned int arg_1) ;
-unsigned int process_string_trampoline (unsigned int arg_1,
-unsigned long int arg_2); 
 #pragma TLIB_SCOPE pop
