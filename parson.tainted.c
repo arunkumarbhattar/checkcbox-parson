@@ -333,7 +333,7 @@ return 1;
 /*
  * Should be Tainted
  */
-static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename) _Unchecked{
+_Tainted static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename) _Unchecked{
     _TPtr<void> fp = t_fopen(filename, "r");
     size_t size_to_read = 0;
     size_t size_read = 0;
@@ -737,7 +737,7 @@ processed_ptr += 2;
 } else if (cp >= 0xD800 && cp <= 0xDBFF) { /* lead surrogate (0xD800..0xDBFF) */
 lead = cp;
 unprocessed_ptr += 4; /* should always be within the buffer, otherwise previous sscanf would fail */
-if (unprocessed_ptr++ != (const char *)'\\' || unprocessed_ptr++ != (const char *)'u') {
+if (*unprocessed_ptr++ != '\\' || *unprocessed_ptr++ != 'u') {
 return JSONFailure;
 }
 parse_succeeded = parse_utf16_hex(unprocessed_ptr, (unsigned int *)&trail);
@@ -1249,37 +1249,227 @@ static _TPtr<TJSON_Value> parse_null_value(_TNt_array_ptr<const char> string) _U
  */
 _Tainted static int json_serialize_to_buffer_r(_TPtr<const TJSON_Value> value,
                                                _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
-                                               int level,
-                                               int is_pretty,
-                                               _TNt_array_ptr<char> num_buf,
-                                               _TNt_array_ptr<char> buf_start : byte_count(buf_len),
-                                               size_t buf_len) {
+int level,
+int is_pretty,
+        _TNt_array_ptr<char> num_buf,
+_TNt_array_ptr<char> buf_start : byte_count(buf_len),
+        size_t buf_len) {
+_TNt_array_ptr<const char> key = NULL;
+_TNt_array_ptr<const char> string = NULL;
+_TPtr<TJSON_Value> temp_value = NULL;
+_TPtr<TJSON_Array> array = NULL;
+_TPtr<TJSON_Object> object = NULL;
 
+size_t i = 0, count = 0;
+double num = 0.0;
+int written = -1, written_total = 0;
 
- return (int)w2c_json_serialize_to_buffer_r( c_fetch_sandbox_address(),
- c_fetch_pointer_offset((void*)value),
- c_fetch_pointer_offset((void*)buf),
- level,
- is_pretty,
- c_fetch_pointer_offset((void*)num_buf),
- c_fetch_pointer_offset((void*)buf_start),
- buf_len);
+switch (json_value_get_type(value)) {
+case JSONArray:
+
+array = json_value_get_array(value);
+
+count = json_array_get_count(array);
+APPEND_STRING("[");
+if (count > 0 && is_pretty) {
+APPEND_STRING("\n");
+}
+for (i = 0; i < count; i++) {
+if (is_pretty) {
+APPEND_INDENT(level+1);
+}
+temp_value = json_array_get_value(array, i);
+written = json_serialize_to_buffer_r(temp_value, buf, level+1, is_pretty, num_buf, buf_start, buf_len);
+if (written < 0) {
+return -1;
+}
+if (buf != NULL) {
+buf += written;
+}
+written_total += written;
+if (i < (count - 1)) {
+APPEND_STRING(",");
+}
+if (is_pretty) {
+APPEND_STRING("\n");
+}
+}
+if (count > 0 && is_pretty) {
+APPEND_INDENT(level);
+}
+APPEND_STRING("]");
+return written_total;
+case JSONObject:
+object = json_value_get_object(value);
+count  = json_object_get_count(object);
+APPEND_STRING("{");
+if (count > 0 && is_pretty) {
+APPEND_STRING("\n");
+}
+for (i = 0; i < count; i++) {
+key = json_object_get_name(object, i);
+if (key == NULL) {
+return -1;
+}
+if (is_pretty) {
+APPEND_INDENT(level+1);
+}
+written = json_serialize_string(key,buf,buf_start, buf_len);
+if (written < 0) {
+return -1;
+}
+if (buf != NULL) {
+buf += written;
+}
+written_total += written;
+APPEND_STRING(":");
+if (is_pretty) {
+APPEND_STRING(" ");
+}
+temp_value = json_object_get_value(object,key);
+written = json_serialize_to_buffer_r(temp_value, buf, level+1, is_pretty, num_buf, buf_start, buf_len);
+if (written < 0) {
+return -1;
+}
+if (buf != NULL) {
+buf += written;
+}
+written_total += written;
+if (i < (count - 1)) {
+APPEND_STRING(",");
+}
+if (is_pretty) {
+APPEND_STRING("\n");
+}
+}
+if (count > 0 && is_pretty) {
+APPEND_INDENT(level);
+}
+APPEND_STRING("}");
+return written_total;
+case JSONString:
+string = json_value_get_string(value);
+if (string == NULL) {
+return -1;
+}
+written = json_serialize_string(string, buf, buf_start, buf_len);
+if (written < 0) {
+return -1;
+}
+if (buf != NULL) {
+buf += written;
+}
+written_total += written;
+return written_total;
+case JSONBoolean:
+if (json_value_get_boolean(value)) {
+APPEND_STRING("true");
+} else {
+APPEND_STRING("false");
+}
+return written_total;
+case JSONNumber:
+num = json_value_get_number(value);
+_Unchecked {
+if (buf != NULL) {
+/*
+ * DO NOT PERFORM CASTS INSIDE THE CHECKCBOX TYPE CASTS
+ * C4 CANT DETONATE
+ */
+_TNt_array_ptr<char> temp_buf = (_TNt_array_ptr<char>)buf;
+num_buf = _Tainted_Assume_bounds_cast<_TNt_array_ptr<char>>(temp_buf, count(0));
+}
+written = t_sprintf(num_buf, FLOAT_FORMAT, num);
+}
+if (written < 0) {
+return -1;
+}
+if (buf != NULL) {
+buf += written;
+}
+written_total += written;
+return written_total;
+case JSONNull:
+APPEND_STRING("null");
+return written_total;
+case JSONError:
+return -1;
+default:
+return -1;
+}
 }
 /*
  *_Checked  TODO: Nothing really harmful here
  */
 _Tainted static int json_serialize_string(_TNt_array_ptr<const char> str_unbounded,
-                                 _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
-                                 _TNt_array_ptr<char> buf_start : byte_count(buf_len),
-                                 size_t buf_len) {
-
-
- return (int)w2c_json_serialize_string( c_fetch_sandbox_address(),
- c_fetch_pointer_offset((void*)str_unbounded),
- c_fetch_pointer_offset((void*)buf),
- c_fetch_pointer_offset((void*)buf_start),
- buf_len);
+                                          _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
+_TNt_array_ptr<char> buf_start : byte_count(buf_len),
+        size_t buf_len) {
+size_t i = 0, len = t_strlen(str_unbounded);
+_TNt_array_ptr<const char> string : count(len) = NULL;
+_Unchecked {
+string = _Tainted_Assume_bounds_cast<_TNt_array_ptr<const char>>(str_unbounded, count(len));
 }
+char c = '\0';
+int written = -1, written_total = 0;
+APPEND_STRING("\"");
+for (i = 0; i < len; i++) {
+c = string[i];
+switch (c) {
+case '\"': APPEND_STRING("\\\""); break;
+case '\\': APPEND_STRING("\\\\"); break;
+case '\b': APPEND_STRING("\\b"); break;
+case '\f': APPEND_STRING("\\f"); break;
+case '\n': APPEND_STRING("\\n"); break;
+case '\r': APPEND_STRING("\\r"); break;
+case '\t': APPEND_STRING("\\t"); break;
+case '\x00': APPEND_STRING("\\u0000"); break;
+case '\x01': APPEND_STRING("\\u0001"); break;
+case '\x02': APPEND_STRING("\\u0002"); break;
+case '\x03': APPEND_STRING("\\u0003"); break;
+case '\x04': APPEND_STRING("\\u0004"); break;
+case '\x05': APPEND_STRING("\\u0005"); break;
+case '\x06': APPEND_STRING("\\u0006"); break;
+case '\x07': APPEND_STRING("\\u0007"); break;
+case '\x0b': APPEND_STRING("\\u000b"); break;
+case '\x0e': APPEND_STRING("\\u000e"); break;
+case '\x0f': APPEND_STRING("\\u000f"); break;
+case '\x10': APPEND_STRING("\\u0010"); break;
+case '\x11': APPEND_STRING("\\u0011"); break;
+case '\x12': APPEND_STRING("\\u0012"); break;
+case '\x13': APPEND_STRING("\\u0013"); break;
+case '\x14': APPEND_STRING("\\u0014"); break;
+case '\x15': APPEND_STRING("\\u0015"); break;
+case '\x16': APPEND_STRING("\\u0016"); break;
+case '\x17': APPEND_STRING("\\u0017"); break;
+case '\x18': APPEND_STRING("\\u0018"); break;
+case '\x19': APPEND_STRING("\\u0019"); break;
+case '\x1a': APPEND_STRING("\\u001a"); break;
+case '\x1b': APPEND_STRING("\\u001b"); break;
+case '\x1c': APPEND_STRING("\\u001c"); break;
+case '\x1d': APPEND_STRING("\\u001d"); break;
+case '\x1e': APPEND_STRING("\\u001e"); break;
+case '\x1f': APPEND_STRING("\\u001f"); break;
+case '/':
+if (parson_escape_slashes) {
+APPEND_STRING("\\/");  /* to make json embeddable in xml\/html */
+} else {
+APPEND_STRING("/");
+}
+break;
+default:
+if (buf != NULL) {
+buf[0] = c;
+buf += 1;
+}
+written_total += 1;
+break;
+}
+}
+APPEND_STRING("\"");
+return written_total;
+}
+
 /*
  * No Unchecked-ness, so no need to perform any tainting
  */
@@ -1360,13 +1550,14 @@ parse_value (first_arg,
 
 _Tainted _TPtr<TJSON_Value> json_parse_file_with_comments(_TNt_array_ptr<const char> filename,
 _TPtr<_TPtr<TJSON_Value>(_TNt_array_ptr<const char>, size_t)>parse_value) {
-
-int ret_param_types[] = {0,0,1};
-
-
- return (_TPtr<TJSON_Value>)c_fetch_pointer_from_offset(w2c_json_parse_file_with_comments( c_fetch_sandbox_address(),
- c_fetch_pointer_offset((void*)filename),
- sbx_register_callback(parse_value_trampoline , 2 , 1 , ret_param_types)));
+_TNt_array_ptr<char> file_contents = read_file((_TNt_array_ptr<const char>)filename);
+_TPtr<TJSON_Value> output_value = NULL;
+if (file_contents == NULL) {
+return NULL;
+}
+output_value = json_parse_string_with_comments(file_contents, parse_value);
+parson_tainted_free(char, file_contents);
+return output_value;
 }
 /*
  * This API is exposed to the public and reads the payload input through from the user
@@ -1393,14 +1584,21 @@ _TPtr<TJSON_Value> json_parse_string(_TNt_array_ptr<const char> string) {
  */
 
 _Tainted _TPtr<TJSON_Value> json_parse_string_with_comments(_TNt_array_ptr<const char> string,
-        _TPtr<_TPtr<TJSON_Value>(_TNt_array_ptr<const char>, size_t)>parse_value) {
-
-int ret_param_types[] = {0,0,1};
-
-
- return (_TPtr<TJSON_Value>)c_fetch_pointer_from_offset(w2c_json_parse_string_with_comments( c_fetch_sandbox_address(),
- c_fetch_pointer_offset((void*)string),
- sbx_register_callback(parse_value_trampoline , 2 , 1 , ret_param_types)));
+_TPtr<_TPtr<TJSON_Value>(_TNt_array_ptr<const char>, size_t)>parse_value) {
+_TPtr<TJSON_Value> result = NULL;
+_TNt_array_ptr<char> string_mutable_copy = (_TNt_array_ptr<char>)tainted_parson_strdup(string);
+if (string_mutable_copy == NULL) {
+return NULL;
+}
+remove_comments((_Nt_array_ptr<char>)string_mutable_copy, "/*", "*/");
+remove_comments((_Nt_array_ptr<char>)string_mutable_copy, "//", "\n");
+//    _Unchecked {
+//        const char* string_mutable_copy_ptr[1] = { NULL };
+//        string_mutable_copy_ptr[0] = (const char*)string_mutable_copy;
+result = (_TPtr<TJSON_Value>)parse_value(string_mutable_copy, 0);
+parson_tainted_free(char, string_mutable_copy);
+return result;
+//  }
 }
 
 /* JSON Object API */
@@ -1743,9 +1941,13 @@ _Mirror _TPtr<TJSON_Value> json_value_init_boolean(int boolean){
  * No Uncheckedness
  */
 _Tainted _TPtr<TJSON_Value> json_value_init_null   (void) {
-
-
- return (_TPtr<TJSON_Value>)c_fetch_pointer_from_offset(w2c_json_value_init_null( c_fetch_sandbox_address()));
+    _TPtr<TJSON_Value> new_value = parson_tainted_malloc(TJSON_Value, sizeof(TJSON_Value));
+    if (!new_value) {
+        return NULL;
+    }
+    new_value->parent = NULL;
+    new_value->type = JSONNull;
+    return new_value;
 }
 /*
  * No Uncheckedness
@@ -1873,12 +2075,18 @@ JSON_Status json_serialize_to_buffer(_TPtr<const TJSON_Value> value, _TNt_array_
  * _Tainted
  */
 _Tainted JSON_Status json_serialize_to_buffer_pretty(_TPtr<const TJSON_Value> value, _TNt_array_ptr<char> buf : byte_count(buf_size_in_bytes), size_t buf_size_in_bytes) {
-
-
- return (JSON_Status)w2c_json_serialize_to_buffer_pretty( c_fetch_sandbox_address(),
- c_fetch_pointer_offset((void*)value),
- c_fetch_pointer_offset((void*)buf),
- buf_size_in_bytes);
+int written = -1;
+size_t needed_size_in_bytes = json_serialization_size_pretty(value);
+if (needed_size_in_bytes == 0 || buf_size_in_bytes < needed_size_in_bytes) {
+return JSONFailure;
+}
+written = json_serialize_to_buffer_r(value, buf, 0, 1, NULL, buf, buf_size_in_bytes);
+if (written < 0) {
+buf[0] = '\0';
+return JSONFailure;
+}
+buf[written] = '\0';
+return JSONSuccess;
 }
 /*
  * No Uncheckedness
@@ -1904,11 +2112,14 @@ _TNt_array_ptr<char>      json_serialize_to_string(_TPtr<const TJSON_Value> valu
 /*
  * No Unchec_Checked kedness
  */
-_Tainted size_t      json_serialization_size_pretty(_TPtr<const TJSON_Value> value ) {
-
-
- return (size_t)w2c_json_serialization_size_pretty( c_fetch_sandbox_address(),
- c_fetch_pointer_offset((void*)value));
+_Tainted size_t      json_serialization_size_pretty(_TPtr<const TJSON_Value> value) {
+//char num_buf _Nt_checked[NUM_BUF_SIZE]; /* recursively allocating buffer on stack is a bad idea, so let's do it only once */
+/*
+ * There is no seperate partition on static space for tainted memory
+ */
+_TNt_array_ptr<char> num_buf = parson_string_tainted_malloc(NUM_BUF_SIZE);
+int res = json_serialize_to_buffer_r((_TPtr<const TJSON_Value>)value, NULL, 0, 1, num_buf, NULL, 0);
+return res < 0 ? 0 : (size_t)(res + 1);
 }
 /*
  * This can be untain_Checked ted later on, once the definition for t_fopen has been written
@@ -1924,10 +2135,22 @@ _Tainted JSON_Status json_serialize_to_file_pretty(_TPtr<const TJSON_Value> valu
  * No Uncheckedness
  */
 _Tainted _TNt_array_ptr<char> json_serialize_to_string_pretty(_TPtr<const TJSON_Value> value) {
-
-
- return (_TNt_array_ptr<char>)c_fetch_pointer_from_offset(w2c_json_serialize_to_string_pretty( c_fetch_sandbox_address(),
- c_fetch_pointer_offset((void*)value)));
+JSON_Status serialization_result = JSONFailure;
+size_t buf_size_bytes = json_serialization_size_pretty(value);
+_TNt_array_ptr<char> buf : byte_count(buf_size_bytes) = NULL;
+if (buf_size_bytes == 0) {
+return NULL;
+}
+buf = parson_string_tainted_malloc(buf_size_bytes);
+if (buf == NULL) {
+return NULL;
+}
+serialization_result = json_serialize_to_buffer_pretty(value, buf, buf_size_bytes);
+if (serialization_result == JSONFailure) {
+json_free_serialized_string(_Tainted_Dynamic_bounds_cast<_TNt_array_ptr<char>>(buf, count(0)));
+return NULL;
+}
+return buf;
 }
 /*
  * No Uncheckedness

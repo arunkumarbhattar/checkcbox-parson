@@ -353,13 +353,17 @@ void test_suite_3(void) {
 
     puts("Test UTF-16 parsing:");
     t_strcpy(filename,"\"\\u0024x\"");
-    TEST(STREQ(json_string(json_parse_string(filename)), "$x"));
+    _TNt_array_ptr<const char> temp_string = json_string(json_parse_string(filename));
+    TEST(STREQ(temp_string, "$x"));
     t_strcpy(filename,"\"\\u00A2x\"");
-    TEST(STREQ(json_string(json_parse_string(filename)), "¢x"));
+    temp_string = json_string(json_parse_string(filename));
+    TEST(STREQ(temp_string, "¢x"));
     t_strcpy(filename,"\"\\u20ACx\"");
-    TEST(STREQ(json_string(json_parse_string(filename)), "€x"));
+    temp_string = json_string(json_parse_string(filename));
+    TEST(STREQ(temp_string, "€x"));
     t_strcpy(filename,"\"\\uD801\\uDC37x\"");
-    TEST(STREQ(json_string(json_parse_string(filename)), "𐐷x"));
+    temp_string = json_string(json_parse_string(filename));
+    TEST(STREQ(temp_string, "𐐷x"));
 
     puts("Testing invalid strings:");
     malloc_count = 0;
