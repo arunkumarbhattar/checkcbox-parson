@@ -296,15 +296,15 @@ _Tainted static int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> s, 
  */
 
 static int is_valid_utf8(_TNt_array_ptr<const char> string : bounds(string, string + string_len), size_t string_len) {
-    int len = 0;
+    _TPtr<int> len = (_TPtr<int>)t_malloc<int>(sizeof(int));
+    *len = 0;
     _TPtr<int> temp = (_TPtr<int>)t_malloc<int>(1*sizeof(int));
-    *temp = 0;
     _TNt_array_ptr<const char> string_end = _Tainted_Dynamic_bounds_cast<_TNt_array_ptr<const char>>(string + string_len, count(0));
-    while (string < string_end) _Checked {
-        if (!verify_utf8_sequence((_Tainted_Dynamic_bounds_cast<_TNt_array_ptr<const unsigned char>>(string, count(0))), temp)) {
+    while (string < string_end) _Unchecked{
+        if (!verify_utf8_sequence((_Tainted_Dynamic_bounds_cast<_TNt_array_ptr<const unsigned char>>(string, count(0))), len)) {
             return 0;
         }
-        string += len;
+        string += *len;
     }
     return 1;
 }
@@ -543,24 +543,52 @@ _Mirror static _TPtr<TJSON_Value> json_object_getn_value(_TPtr<const TJSON_Objec
  * However, we shall taint this as it makes more sense -->
  */
 _Tainted static JSON_Status json_object_remove_internal(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name, int free_value) {
-
-
- return (JSON_Status)w2c_json_object_remove_internal( c_fetch_sandbox_address(),
- c_fetch_pointer_offset((void*)object),
- c_fetch_pointer_offset((void*)name),
- free_value);
+size_t i = 0, last_item_index = 0;
+if (object == NULL || json_object_get_value(object, name) == NULL) {
+return JSONFailure;
+}
+last_item_index = json_object_get_count(object) - 1;
+for (i = 0; i < json_object_get_count(object); i++) {
+if (t_strcmp(object->names[i], name) == 0) {
+parson_tainted_free(char, object->names[i]);
+if (free_value) {
+json_value_free(object->values[i]);
+}
+if (i != last_item_index) { /* Replace key value pair with one from the end */
+object->names[i] = object->names[last_item_index];
+object->values[i] = object->values[last_item_index];
+}
+object->count -= 1;
+return JSONSuccess;
+}
+}
+return JSONFailure; /* No execution path should end here */
 }
 /*
  * We will taint this as there is a possibility of bounds overflow.
  */
 _Tainted static JSON_Status json_object_dotremove_internal(_TPtr<TJSON_Object> object,
-                                                  _TNt_array_ptr<const char> name, int free_value) {
-
-
- return (JSON_Status)w2c_json_object_dotremove_internal( c_fetch_sandbox_address(),
- c_fetch_pointer_offset((void*)object),
- c_fetch_pointer_offset((void*)name),
- free_value);
+_TNt_array_ptr<const char> name, int free_value) {
+_TPtr<TJSON_Value> temp_value = NULL;
+_TPtr<TJSON_Object> temp_object = NULL;
+_TNt_array_ptr<const char> dot_pos = (_TNt_array_ptr<const char>)strchr((const char *)name, '.');
+if (dot_pos == NULL) {
+return json_object_remove_internal(object, name, free_value);
+}
+_Nt_array_ptr<const char> before_dot : count((size_t)(dot_pos - name)) = NULL;
+_Unchecked {
+before_dot = _Assume_bounds_cast<_Nt_array_ptr<const char>>(name, count((size_t)(dot_pos - name)));
+}
+temp_value = (_TPtr<TJSON_Value>)json_object_getn_value((_TPtr<const TJSON_Object>)object, (_TNt_array_ptr<const char>)before_dot, (size_t)(dot_pos - name));
+if (json_value_get_type(temp_value) != JSONObject) {
+return JSONFailure;
+}
+temp_object = (_TPtr<TJSON_Object>)json_value_get_object(temp_value);
+_Nt_array_ptr<const char> after_dot = NULL;
+_Unchecked {
+after_dot = _Assume_bounds_cast<_Nt_array_ptr<const char>>(dot_pos + 1, count(0));
+}
+return json_object_dotremove_internal(temp_object, (_TNt_array_ptr<const char>)after_dot, free_value);
 }
 
 /*
@@ -2162,12 +2190,20 @@ _Mirror void        json_free_serialized_string(_TNt_array_ptr<const char> strin
  * TODO: No Real Harm Here
  */
 _Tainted JSON_Status json_array_remove(_TPtr<TJSON_Array> array, size_t ix) {
-
-
- return (JSON_Status)w2c_json_array_remove( c_fetch_sandbox_address(),
- c_fetch_pointer_offset((void*)array),
- ix);
+size_t to_move_bytes = 0;
+if (array == NULL || ix >= json_array_get_count(array)) {
+return JSONFailure;
 }
+json_value_free(json_array_get_value(array, ix));
+to_move_bytes = (json_array_get_count(array) - 1 - ix) * sizeof(_TPtr<TJSON_Value>);
+// TODO: Unchecked because memmove doesn't yet take a type argument
+_Unchecked {
+memmove((void*)(array->items + ix), (void*)(array->items + ix + 1), to_move_bytes);
+}
+array->count -= 1;
+return JSONSuccess;
+}
+/*
 /*
  * No UncheckedNess
  */
