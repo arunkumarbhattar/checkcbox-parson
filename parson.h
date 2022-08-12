@@ -211,7 +211,7 @@ _TPtr<TJSON_Value> json_array_get_wrapping_value(_TPtr<const TJSON_Array>array);
 
 /* Frees and removes value at given index, does nothing and returns JSONFailure if index doesn't exist.
  * Order of values in array may change during execution.  */
-JSON_Status json_array_remove(_TPtr<TJSON_Array> array, size_t i);
+_TPtr<JSON_Status> json_array_remove(_TPtr<TJSON_Array> array, size_t ix);
 
 /* Frees and removes from array value at given index and replaces it with given one.
  * Does nothing and returns JSONFailure if index doesn't exist.

@@ -2189,21 +2189,13 @@ _Mirror void        json_free_serialized_string(_TNt_array_ptr<const char> strin
 /*
  * TODO: No Real Harm Here
  */
-_Tainted JSON_Status json_array_remove(_TPtr<TJSON_Array> array, size_t ix) {
-size_t to_move_bytes = 0;
-if (array == NULL || ix >= json_array_get_count(array)) {
-return JSONFailure;
+_Tainted _TPtr<JSON_Status> json_array_remove(_TPtr<TJSON_Array> array, size_t ix) {
+
+
+ return (_TPtr<JSON_Status>)c_fetch_pointer_from_offset(w2c_json_array_remove_pecial( c_fetch_sandbox_address(),
+ c_fetch_pointer_offset((void*)array),
+ ix));
 }
-json_value_free(json_array_get_value(array, ix));
-to_move_bytes = (json_array_get_count(array) - 1 - ix) * sizeof(_TPtr<TJSON_Value>);
-// TODO: Unchecked because memmove doesn't yet take a type argument
-_Unchecked {
-memmove((void*)(array->items + ix), (void*)(array->items + ix + 1), to_move_bytes);
-}
-array->count -= 1;
-return JSONSuccess;
-}
-/*
 /*
  * No UncheckedNess
  */
