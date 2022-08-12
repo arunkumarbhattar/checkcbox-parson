@@ -558,8 +558,7 @@ void test_suite_5(void) {
     TEST(json_array_append_string(NULL, string_1) == JSONFailure);
     TEST(json_array_append_value(interests_arr, NULL) == JSONFailure);
     TEST(json_array_append_value(NULL, NULL) == JSONFailure);
-    _TPtr<int> temp = json_array_remove(NULL, 0);
-    TEST( *temp == JSONFailure);
+    TEST(json_array_remove(NULL, 0) == JSONFailure);
     TEST(json_array_replace_value(interests_arr, 0, NULL) == JSONFailure);
     t_strcpy(string_1,"lorem");
     TEST(json_array_replace_string(NULL, 0, string_1) == JSONFailure);
