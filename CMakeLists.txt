@@ -10,7 +10,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ldl -lpthread")
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    add_compile_options( -Wall -Wextra -ferror-limit=1000)
+    add_compile_options( -Wall -Wextra)
     add_link_options(-ldl -lstdc++)
 endif()
 add_executable(final "${CMAKE_SOURCE_DIR}/tests.c"

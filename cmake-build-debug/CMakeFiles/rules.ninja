@@ -17,7 +17,7 @@
 rule C_COMPILER__final_Debug
   depfile = $DEP_FILE
   deps = gcc
-  command = /home/twinturbo/Desktop/compiler/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = /usr/bin/cc $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 
@@ -25,7 +25,7 @@ rule C_COMPILER__final_Debug
 # Rule for linking CXX executable.
 
 rule CXX_EXECUTABLE_LINKER__final_Debug
-  command = $PRE_LINK && /home/twinturbo/Desktop/compiler/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang $FLAGS $LINK_FLAGS $in -o $TARGET_FILE $LINK_PATH $LINK_LIBRARIES && $POST_BUILD
+  command = $PRE_LINK && /usr/bin/c++ $FLAGS $LINK_FLAGS $in -o $TARGET_FILE $LINK_PATH $LINK_LIBRARIES && $POST_BUILD
   description = Linking CXX executable $TARGET_FILE
   restat = $RESTAT
 
@@ -42,7 +42,7 @@ rule CUSTOM_COMMAND
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = /snap/clion/203/bin/cmake/linux/bin/cmake --regenerate-during-build -S/home/twinturbo/Desktop/checkedc-parson -B/home/twinturbo/Desktop/checkedc-parson/cmake-build-debug
+  command = /snap/clion/204/bin/cmake/linux/bin/cmake --regenerate-during-build -S/home/arun/CLionProjects/checkedc-parson -B/home/arun/CLionProjects/checkedc-parson/cmake-build-debug
   description = Re-running CMake...
   generator = 1
 
@@ -51,7 +51,7 @@ rule RERUN_CMAKE
 # Rule for cleaning all built files.
 
 rule CLEAN
-  command = /snap/clion/203/bin/ninja/linux/ninja $FILE_ARG -t clean $TARGETS
+  command = /snap/clion/204/bin/ninja/linux/ninja $FILE_ARG -t clean $TARGETS
   description = Cleaning all built files...
 
 
@@ -59,6 +59,6 @@ rule CLEAN
 # Rule for printing all primary targets available.
 
 rule HELP
-  command = /snap/clion/203/bin/ninja/linux/ninja -t targets
+  command = /snap/clion/204/bin/ninja/linux/ninja -t targets
   description = All primary targets available:
 
