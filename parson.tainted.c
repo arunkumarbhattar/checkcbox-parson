@@ -394,10 +394,10 @@ _TPtr<TJSON_Value> value) {
 
 
  return (JSON_Status)w2c_json_object_addn( c_fetch_sandbox_address(),
+ c_fetch_pointer_offset((void*)value),
  c_fetch_pointer_offset((void*)object),
  c_fetch_pointer_offset((void*)name),
- name_len,
- c_fetch_pointer_offset((void*)value));
+ name_len);
 }
 /*
  * Need to Taint This
