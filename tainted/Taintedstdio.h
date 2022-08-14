@@ -3,3 +3,5 @@
  */ 
 
 #define EOF (-1)
+
+#define SEEK_END	2	/* Seek from end of file.  */

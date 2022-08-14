@@ -25,9 +25,30 @@ typedef  struct json_value_t_t  TJSON_Value;
 
  TJSON_Value *       parse_value(const char * string, size_t nesting);
 
- static char * string_tainted_malloc(size_t sz);
+ int verify_utf8_sequence(const unsigned char * s, int * len);
 
- TJSON_Value * json_parse_file(const char * filename);
+ JSON_Status       json_object_resize(TJSON_Object * object, size_t new_capacity);
+
+ char * get_quoted_string(const char * string,
+char * (*process_string)(const char * input,size_t len));
+
+ int  parse_utf16(const char * unprocessed, char * processed);
+
+ JSON_Status       json_object_remove_internal(TJSON_Object * object, const char * name, int free_value);
+
+ JSON_Status       json_object_dotremove_internal(TJSON_Object * object, const char * name, int free_value);
+
+ JSON_Status       json_object_addn(TJSON_Object * object,
+const char * name ,
+        size_t name_len,
+TJSON_Value * value);
+
+  TJSON_Value * parse_number_value(const char * string);
+
+ TJSON_Value * parse_string_value(const char * string,
+char * (*process_string)(const char * input,size_t len));
+
+ char * string_tainted_malloc(size_t sz);
 
  TJSON_Value * json_parse_file_with_comments(const char * filename,
 TJSON_Value * (*parse_value)(const char * ,size_t));

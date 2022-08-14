@@ -1,4 +1,0 @@
-/snap/clion/203/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/snap/clion/203/bin/ninja/linux/ninja -DCMAKE_C_COMPILER=/home/twinturbo/Desktop/compiler/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang -DCMAKE_CXX_COMPILER=/home/twinturbo/Desktop/compiler/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang -G Ninja -S /home/twinturbo/Desktop/checkedc-parson -B /home/twinturbo/Desktop/checkedc-parson/cmake-build-debug
--- Configuring done
--- Generating done
--- Build files have been written to: /home/twinturbo/Desktop/checkedc-parson/cmake-build-debug
