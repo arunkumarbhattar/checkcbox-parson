@@ -69,7 +69,7 @@ static char * read_file(const char * filename);
 
 static int tests_passed;
 static int tests_failed;
-_Tainted static _TNt_array_ptr<char> string_malloc(size_t sz) : count(sz) _Unchecked{
+_Tainted _TNt_array_ptr<char> string_malloc(size_t sz) : count(sz) _Unchecked{
 if(sz >= SIZE_MAX)
 return NULL;
 _TArray_ptr<char> p : count(sz+1) = (_TArray_ptr<char>)t_malloc<char>(sz + 1);

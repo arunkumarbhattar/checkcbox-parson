@@ -1,4 +1,4 @@
-#include "/home/twinturbo/Desktop/checkedc-parson/tainted/WASM2Cparson.h"
+#include "tainted/WASM2Cparson.h"
 #include <checkcbox_extensions.h>
 /*
  Checked C Parson
@@ -93,7 +93,7 @@ _Itype_for_any(T) _TPtr<void (_TArray_ptr<T> : byte_count(0))> parson_tainted_fr
 
 #define parson_free_unchecked(t, buf) (t_free<t>(buf))
 
-_Tainted static _TNt_array_ptr<char> parson_string_tainted_malloc(size_t sz) : count(sz) _Unchecked{
+_Tainted _TNt_array_ptr<char> parson_string_tainted_malloc(size_t sz) : count(sz) _Unchecked{
 if(sz >= SIZE_MAX)
 return NULL;
 _TArray_ptr<char> p : count(sz+1) = (_TArray_ptr<char>)t_malloc<char>(sz + 1);
@@ -111,7 +111,7 @@ static _Nt_array_ptr<char> parson_string_malloc(size_t sz) : count(sz)_Unchecked
     return _Assume_bounds_cast<_Nt_array_ptr<char>>(p, count(sz));
 }
 
-_Tainted static int parson_escape_slashes = 1;
+_Tainted int parson_escape_slashes = 1;
 
 #define IS_CONT(b) (((unsigned char)(b) & 0xC0) == 0x80) /* is utf-8 continuation byte */
 
@@ -152,22 +152,22 @@ _Mirror static void remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<co
 _Mirror static int                 hex_char_to_int(char c);
 static int _Unchecked      parse_utf16_hex(const char* string, unsigned int* result);
 static int                 num_bytes_in_utf8_sequence(unsigned char c);
-_Tainted static int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> s, _TPtr<int> len); // len is set after, not a constraint on string
+_Tainted int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> s, _TPtr<int> len); // len is set after, not a constraint on string
 static int is_valid_utf8(_TNt_array_ptr<const char> string : bounds(string, string + string_len), size_t string_len);
-_Tainted static int                 is_decimal(_TNt_array_ptr<const char> string : count(length), size_t length);
+_Tainted int                 is_decimal(_TNt_array_ptr<const char> string : count(length), size_t length);
 
 /* JSON Object */
-_Tainted static _TPtr<TJSON_Object> json_object_init(_TPtr<TJSON_Value> wrapping_value);
+_Tainted _TPtr<TJSON_Object> json_object_init(_TPtr<TJSON_Value> wrapping_value);
 static JSON_Status       json_object_add(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name, _TPtr<TJSON_Value> value);
-_Tainted static JSON_Status       json_object_addn(_TPtr<TJSON_Object> object,
+_Tainted JSON_Status       json_object_addn(_TPtr<TJSON_Object> object,
                                           _TNt_array_ptr<const char> name : count(name_len),
                                           size_t name_len,
                                           _TPtr<TJSON_Value> value);
-_Tainted static JSON_Status       json_object_resize(_TPtr<TJSON_Object> object, size_t new_capacity);
+_Tainted JSON_Status       json_object_resize(_TPtr<TJSON_Object> object, size_t new_capacity);
 _Mirror static _TPtr<TJSON_Value>      json_object_getn_value(_TPtr<const TJSON_Object> object, _TNt_array_ptr<const char> name : count(name_len), size_t name_len);
-_Tainted static JSON_Status       json_object_remove_internal(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name, int free_value);
-_Tainted static JSON_Status       json_object_dotremove_internal(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name, int free_value);
-_Tainted static void              json_object_free(_TPtr<TJSON_Object> object);
+_Tainted JSON_Status       json_object_remove_internal(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name, int free_value);
+_Tainted JSON_Status       json_object_dotremove_internal(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name, int free_value);
+_Tainted void              json_object_free(_TPtr<TJSON_Object> object);
 
 /* JSON Array */
 static _TPtr<TJSON_Array> json_array_init(_TPtr<TJSON_Value> wrapping_value);
@@ -180,24 +180,24 @@ static _TPtr<TJSON_Value> json_value_init_string_no_copy(_TNt_array_ptr<char> st
 
 /* Parser */
 static JSON_Status            skip_quotes(_TNt_array_ptr<const char> string);
-_Tainted static int _Unchecked parse_utf16(_TNt_array_ptr<const char> unprocessed, _TNt_array_ptr<char> processed);
+_Tainted int _Unchecked parse_utf16(_TNt_array_ptr<const char> unprocessed, _TNt_array_ptr<char> processed);
 _Callback static _TNt_array_ptr<char>    process_string(_TNt_array_ptr<const char> input : count(len), size_t len);
 /*
  * It does not matter if the function pointer (callback) does not bear tainted pointers
  *
  */
-_Tainted static _TNt_array_ptr<char> get_quoted_string(_TNt_array_ptr<const char> string,
+_Tainted _TNt_array_ptr<char> get_quoted_string(_TNt_array_ptr<const char> string,
 _TPtr<_TNt_array_ptr<char>(_TNt_array_ptr<const char> input : count(len), size_t len)> process_string);
 static _TPtr<TJSON_Value>       parse_object_value(_TNt_array_ptr<const char> string, size_t nesting);
 static _TPtr<TJSON_Value>       parse_array_value(_TNt_array_ptr<const char> string, size_t nesting);
 static _TPtr<TJSON_Value>       parse_boolean_value(_TNt_array_ptr<const char> string);
-_Tainted static _TPtr<TJSON_Value> parse_number_value(_TNt_array_ptr<const char> string);
+_Tainted _TPtr<TJSON_Value> parse_number_value(_TNt_array_ptr<const char> string);
 static _TPtr<TJSON_Value>       parse_null_value(_TNt_array_ptr<const char> string);
 
 
 /* Serialization */
-_Tainted static int   json_serialize_to_buffer_r(_TPtr<const TJSON_Value> value, _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len), int level, int is_pretty, _TNt_array_ptr<char> num_buf, _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
-_Tainted static int            json_serialize_string(_TNt_array_ptr<const char> string, _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len), _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
+_Tainted int   json_serialize_to_buffer_r(_TPtr<const TJSON_Value> value, _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len), int level, int is_pretty, _TNt_array_ptr<char> num_buf, _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
+_Tainted int            json_serialize_string(_TNt_array_ptr<const char> string, _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len), _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
 static int _Mirror _Unchecked append_indent(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
                                     int level, _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
 static int _Mirror _Unchecked append_string(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
@@ -210,7 +210,7 @@ const char* string, _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t
  * Safe to make a copy of this even in the tainted region
  * Need NOT make this callback as this does not access any global data
  */
-_Tainted static _TNt_array_ptr<char> tainted_parson_strndup(_TNt_array_ptr<const char> string : count(n), size_t n) {
+_Tainted _TNt_array_ptr<char> tainted_parson_strndup(_TNt_array_ptr<const char> string : count(n), size_t n) {
 
 
  return (_TNt_array_ptr<char>)c_fetch_pointer_from_offset(w2c_tainted_parson_strndup( c_fetch_sandbox_address(),
@@ -218,7 +218,7 @@ _Tainted static _TNt_array_ptr<char> tainted_parson_strndup(_TNt_array_ptr<const
  n));
 }
 
-_Tainted static _TNt_array_ptr<char> tainted_parson_strdup(_TNt_array_ptr<const char> string) {
+_Tainted _TNt_array_ptr<char> tainted_parson_strdup(_TNt_array_ptr<const char> string) {
 
 
  return (_TNt_array_ptr<char>)c_fetch_pointer_from_offset(w2c_tainted_parson_strdup( c_fetch_sandbox_address(),
@@ -283,7 +283,7 @@ _Mirror static int num_bytes_in_utf8_sequence(unsigned char c) {
 /*
  * Utility Function, no real harm seen here
  */
-_Tainted static int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> s, _TPtr<int> len) _Checked {
+_Tainted int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> s, _TPtr<int> len) _Checked {
 
 
  return (int)w2c_verify_utf8_sequence( c_fetch_sandbox_address(),
@@ -315,7 +315,7 @@ static int is_valid_utf8(_TNt_array_ptr<const char> string : bounds(string, stri
  * Even this is NOT WORKING in the tainted region
  * But exact logic works here
  */
-_Tainted static int is_decimal(_TNt_array_ptr<const char> string : count(length), size_t length) {
+_Tainted int is_decimal(_TNt_array_ptr<const char> string : count(length), size_t length) {
 if (length > 1 && string[0] == '0' && string[1] != '.') {
 return 0;
 }
@@ -333,7 +333,7 @@ return 1;
 /*
  * Should be Tainted
  */
-_Tainted static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename) _Unchecked{
+_Tainted _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename) _Unchecked{
     _TPtr<void> fp = t_fopen(filename, "r");
     size_t size_to_read = 0;
     size_t size_read = 0;
@@ -415,7 +415,7 @@ _Mirror static void remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<co
 /* JSON Object */
 /*
  *_Checked /
-_Tainted static _TPtr<TJSON_Object> json_object_init(_TPtr<TJSON_Value> wrapping_value_ip) {
+_Tainted _TPtr<TJSON_Object> json_object_init(_TPtr<TJSON_Value> wrapping_value_ip) {
 
 
  return (_TPtr<TJSON_Object>)c_fetch_pointer_from_offset(w2c_json_object_init( c_fetch_sandbox_address(),
@@ -438,7 +438,7 @@ static JSON_Status json_object_add(_TPtr<TJSON_Object> object, _TNt_array_ptr<co
 /*
  * No Unchecked-ness in here
  * However, will accept and return Tainted pointers as it makvoid */
-//_Tainted static JSON_Status json_object_addn(_TPtr<TJSON_Object> object,
+//_Tainted JSON_Status json_object_addn(_TPtr<TJSON_Object> object,
 //                _TNt_array_ptr<const char> name : count(name_len),
 //                                    size_t name_len,
 //                                    _TPtr<TJSON_Value> value) {
@@ -450,7 +450,7 @@ static JSON_Status json_object_add(_TPtr<TJSON_Object> object, _TNt_array_ptr<co
 // name_len,
 // c_fetch_pointer_offset((void*)value));
 //}
-_Tainted static JSON_Status json_object_addn(_TPtr<TJSON_Object> object,
+_Tainted JSON_Status json_object_addn(_TPtr<TJSON_Object> object,
 _TNt_array_ptr<const char> name : count(name_len),
         size_t name_len,
 _TPtr<TJSON_Value> value) {
@@ -481,7 +481,7 @@ return JSONSuccess;
  * Need to Taint This
  *
  */
-_Tainted static JSON_Status json_object_resize(_TPtr<TJSON_Object> object, size_t new_capacity) {
+_Tainted JSON_Status json_object_resize(_TPtr<TJSON_Object> object, size_t new_capacity) {
 if ((object->names == NULL && object->values != NULL) ||
 (object->names != NULL && object->values == NULL) ||
 new_capacity == 0) {
@@ -542,7 +542,7 @@ _Mirror static _TPtr<TJSON_Value> json_object_getn_value(_TPtr<const TJSON_Objec
  *
  * However, we shall taint this as it makes more sense -->
  */
-_Tainted static JSON_Status json_object_remove_internal(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name, int free_value) {
+_Tainted JSON_Status json_object_remove_internal(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name, int free_value) {
 size_t i = 0, last_item_index = 0;
 if (object == NULL || json_object_get_value(object, name) == NULL) {
 return JSONFailure;
@@ -567,7 +567,7 @@ return JSONFailure; /* No execution path should end here */
 /*
  * We will taint this as there is a possibility of bounds overflow.
  */
-_Tainted static JSON_Status json_object_dotremove_internal(_TPtr<TJSON_Object> object,
+_Tainted JSON_Status json_object_dotremove_internal(_TPtr<TJSON_Object> object,
 _TNt_array_ptr<const char> name, int free_value) {
 _TPtr<TJSON_Value> temp_value = NULL;
 _TPtr<TJSON_Object> temp_object = NULL;
@@ -595,7 +595,7 @@ return json_object_dotremove_internal(temp_object, (_TNt_array_ptr<const char>)a
  * No Unchecked operation, hence no need to be tainted
  * How ever, only called from a tainted function
  */
-_Tainted static void json_object_free(_TPtr<TJSON_Object> object) {
+_Tainted void json_object_free(_TPtr<TJSON_Object> object) {
     size_t i;
     for (i = 0; i < object->count; i++) {
         parson_tainted_free(char, object->names[i]);
@@ -610,7 +610,7 @@ _Tainted static void json_object_free(_TPtr<TJSON_Object> object) {
 /*
  * No Unchecked operation, hence no need to be tainted
  */
-_Tainted static _TPtr<TJSON_Array> json_array_init(_TPtr<TJSON_Value> wrapping_value) {
+_Tainted _TPtr<TJSON_Array> json_array_init(_TPtr<TJSON_Value> wrapping_value) {
     _TPtr<TJSON_Array> new_array = parson_tainted_malloc(TJSON_Array, sizeof(TJSON_Array));
     if (new_array == NULL) {
     return NULL;
@@ -690,7 +690,7 @@ _Mirror _Checked static void json_array_free(_TPtr<TJSON_Array> array) _Checked 
  *
  * But Still we are tainting it, due to its relevance
  */
-_Tainted static _TPtr<TJSON_Value> json_value_init_string_no_copy(_TNt_array_ptr<char> string) {
+_Tainted _TPtr<TJSON_Value> json_value_init_string_no_copy(_TNt_array_ptr<char> string) {
 _TPtr<TJSON_Value> new_value = (_TPtr<TJSON_Value>)parson_tainted_malloc(TJSON_Value, sizeof(TJSON_Value));
 if (!new_value) {
 return NULL;
@@ -736,7 +736,7 @@ _Mirror static _Checked JSON_Status skip_quotes(_TNt_array_ptr<const char> strin
  * Lets Taint This
  *
  */
-_Tainted static int _Unchecked parse_utf16(_TNt_array_ptr<const char> unprocessed ,
+_Tainted int _Unchecked parse_utf16(_TNt_array_ptr<const char> unprocessed ,
 _TNt_array_ptr<char> processed) {
 unsigned int cp, lead, trail;
 int parse_succeeded = 0;
@@ -939,7 +939,7 @@ _TLIB unsigned int process_string_trampoline (unsigned sandbox, unsigned int arg
     return c_fetch_pointer_offset ((void*)process_string (first_arg,
                                                           (size_t) arg_2));
 }
-//_Tainted static _TNt_array_ptr<char> get_quoted_string(_TNt_array_ptr<const char> string,
+//_Tainted _TNt_array_ptr<char> get_quoted_string(_TNt_array_ptr<const char> string,
 //_TPtr<_TNt_array_ptr<char>(_TNt_array_ptr<const char> input : count(len), size_t len)> process_string) {
 //
 //int ret_param_types[] = {0,0,1};
@@ -950,7 +950,7 @@ _TLIB unsigned int process_string_trampoline (unsigned sandbox, unsigned int arg
 // sbx_register_callback(process_string_trampoline , 2 , 1 , ret_param_types)));
 //}
 
-_Tainted static _TNt_array_ptr<char> get_quoted_string(_TNt_array_ptr<const char> string,
+_Tainted _TNt_array_ptr<char> get_quoted_string(_TNt_array_ptr<const char> string,
 _TPtr<_TNt_array_ptr<char>(_TNt_array_ptr<const char> input : count(len), size_t len)> process_string) {
     int str_len = t_strlen(string);
     _TNt_array_ptr<const char> string_start = parson_string_tainted_malloc(str_len*sizeof(char));
@@ -1161,7 +1161,7 @@ static _TPtr<TJSON_Value> parse_array_value(_TNt_array_ptr<const char> string, s
 _Checked  * from a callback function with tainted arguments
  */
 
-//_Tainted static _TPtr<TJSON_Value>  parse_string_value(_TNt_array_ptr<const char> string,
+//_Tainted _TPtr<TJSON_Value>  parse_string_value(_TNt_array_ptr<const char> string,
 //                                                      _TPtr<_TNt_array_ptr<char>(_TNt_array_ptr<const char> input : count(len),
 //                                                      size_t len)> process_string) {
 //
@@ -1173,7 +1173,7 @@ _Checked  * from a callback function with tainted arguments
 // sbx_register_callback(process_string_trampoline , 2 , 1 , ret_param_types)));
 //}
 
-_Tainted static _TPtr<TJSON_Value> parse_string_value(_TNt_array_ptr<const char> string,
+_Tainted _TPtr<TJSON_Value> parse_string_value(_TNt_array_ptr<const char> string,
 _TPtr<_TNt_array_ptr<char>(_TNt_array_ptr<const char> input : count(len),
         size_t len)> process_string) {
 int str_len = t_strlen(string);
@@ -1201,7 +1201,7 @@ return value;
  * Id_Checked eally we could have this as a mirror function, but I am m_Checked aking it tainted,
  * as it will only ever be called from a Callback function with tainted_Checked  values
  */
-_Tainted static _TPtr<TJSON_Value> parse_boolean_value(_TNt_array_ptr<const char> string) {
+_Tainted _TPtr<TJSON_Value> parse_boolean_value(_TNt_array_ptr<const char> string) {
 int str_len = t_strlen(string);
 _TNt_array_ptr<const char> str_cpy = (_TNt_array_ptr<const char>)parson_string_tainted_malloc
 (str_len*sizeof(char));
@@ -1227,7 +1227,7 @@ return NULL;
 /*
  * No Unchecked_Checked  operation, hence no need to be tainted
  */
-_Tainted static _Unchecked _TPtr<TJSON_Value> parse_number_value(_TNt_array_ptr<const char> string) {
+_Tainted _Unchecked _TPtr<TJSON_Value> parse_number_value(_TNt_array_ptr<const char> string) {
     int str_len = t_strlen(string);
     _TNt_array_ptr<const char> str_cpy = (_TNt_array_ptr<const char>)parson_string_tainted_malloc
             (str_len*sizeof(char));
@@ -1275,7 +1275,7 @@ static _TPtr<TJSON_Value> parse_null_value(_TNt_array_ptr<const char> string) _U
 /*
  * TODO: NO IDEA?? TAINTED OR NOT??
  */
-_Tainted static int json_serialize_to_buffer_r(_TPtr<const TJSON_Value> value,
+_Tainted int json_serialize_to_buffer_r(_TPtr<const TJSON_Value> value,
                                                _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
 int level,
 int is_pretty,
@@ -1429,7 +1429,7 @@ return -1;
 /*
  *_Checked  TODO: Nothing really harmful here
  */
-_Tainted static int json_serialize_string(_TNt_array_ptr<const char> str_unbounded,
+_Tainted int json_serialize_string(_TNt_array_ptr<const char> str_unbounded,
                                           _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
 _TNt_array_ptr<char> buf_start : byte_count(buf_len),
         size_t buf_len) {
@@ -1860,7 +1860,7 @@ _Mirror void json_value_free(_TPtr<TJSON_Value> value) _Checked {
 /*
  * No Uncheckedness
  */
-_Tainted static _TPtr<TJSON_Object> json_object_init(_TPtr<TJSON_Value> wrapping_value_ip) {
+_Tainted _TPtr<TJSON_Object> json_object_init(_TPtr<TJSON_Value> wrapping_value_ip) {
 _TPtr<TJSON_Object> new_obj = parson_tainted_malloc(TJSON_Object, sizeof(TJSON_Object));
 _TPtr<int> g = parson_tainted_malloc(int, sizeof(int));
 *g = 10;
