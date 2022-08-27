@@ -105,8 +105,8 @@ int main() {
 
 void test_suite_1(void) {
     _TPtr<TJSON_Value> val_tainted = NULL;
-    _TNt_array_ptr<char> filename = string_malloc(sizeof("/home/twinturbo/Desktop/checkedc-parson/tests/test_1_1.txt"));
-    t_strcpy(filename,"/home/twinturbo/Desktop/checkedc-parson/tests/test_1_1.txt");
+    _TNt_array_ptr<char> filename = string_malloc(sizeof("/home/arun/CLionProjects/checkedc-parson/tests/test_1_1.txt"));
+    t_strcpy(filename,"/home/arun/CLionProjects/checkedc-parson/tests/test_1_1.txt");
     TEST((val_tainted = json_parse_file(filename)) != NULL);
     /*
      * Marshalling Snippet
@@ -114,26 +114,26 @@ void test_suite_1(void) {
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
-    t_strcpy(filename,"/home/twinturbo/Desktop/checkedc-parson/tests/test_1_2.txt");
+    t_strcpy(filename,"/home/arun/CLionProjects/checkedc-parson/tests/test_1_2.txt");
     TEST((val_tainted = json_parse_file(filename)) == NULL); /* Over 2048 levels of nesting */
     if (val_tainted) { json_value_free(val_tainted); }
 
-    t_strcpy(filename,"/home/twinturbo/Desktop/checkedc-parson/tests/test_1_3.txt");
+    t_strcpy(filename,"/home/arun/CLionProjects/checkedc-parson/tests/test_1_3.txt");
     TEST((val_tainted = json_parse_file(filename)) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
 
-    t_strcpy(filename,"/home/twinturbo/Desktop/checkedc-parson/tests/test_1_1.txt");
+    t_strcpy(filename,"/home/arun/CLionProjects/checkedc-parson/tests/test_1_1.txt");
     TEST((val_tainted = json_parse_file_with_comments(filename, &parse_value)) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
 
-    t_strcpy(filename,"/home/twinturbo/Desktop/checkedc-parson/tests/test_1_2.txt");
+    t_strcpy(filename,"/home/arun/CLionProjects/checkedc-parson/tests/test_1_2.txt");
     TEST((val_tainted = json_parse_file_with_comments(filename, &parse_value)) == NULL); /* Over 2048 levels of nesting */
     if (val_tainted) { json_value_free(val_tainted); }
-    t_strcpy(filename,"/home/twinturbo/Desktop/checkedc-parson/tests/test_1_3.txt");
+    t_strcpy(filename,"/home/arun/CLionProjects/checkedc-parson/tests/test_1_3.txt");
     TEST((val_tainted = json_parse_file_with_comments(filename, &parse_value)) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
@@ -310,7 +310,7 @@ void test_suite_2(_TPtr<TJSON_Value> root_value) {
 void test_suite_2_no_comments(void) {
     _TPtr<TJSON_Value> val_tainted = NULL;
     _TNt_array_ptr<char> filename = string_malloc(100*sizeof(char));
-    t_strcpy(filename,"/home/twinturbo/Desktop/checkedc-parson/tests/test_2.txt");
+    t_strcpy(filename,"/home/arun/CLionProjects/checkedc-parson/tests/test_2.txt");
     _TPtr<TJSON_Value> root_value = NULL;
     root_value = json_parse_file(filename);
     test_suite_2(root_value);
@@ -322,7 +322,7 @@ void test_suite_2_no_comments(void) {
 void test_suite_2_with_comments(void) {
     _TPtr<TJSON_Value> val_tainted = NULL;
     _TNt_array_ptr<char> filename = string_malloc(100*sizeof(char));
-    t_strcpy(filename,"/home/twinturbo/Desktop/checkedc-parson/tests/test_2_comments.txt");
+    t_strcpy(filename,"/home/arun/CLionProjects/checkedc-parson/tests/test_2_comments.txt");
     _TPtr<TJSON_Value> root_value = NULL;
     root_value = json_parse_file_with_comments(filename, &parse_value);
     test_suite_2(root_value);
@@ -460,7 +460,7 @@ void test_suite_3(void) {
 void test_suite_4() {
     _TPtr<TJSON_Value> val_tainted = NULL;
     _TNt_array_ptr<char> filename = string_malloc(100*sizeof(char));
-    t_strcpy(filename,"/home/twinturbo/Desktop/checkedc-parson/tests/test_2.txt");
+    t_strcpy(filename,"/home/arun/CLionProjects/checkedc-parson/tests/test_2.txt");
     _TPtr<TJSON_Value> a = NULL, a_copy = NULL;
     t_printf("Testing %s:\n", filename);
     a = json_parse_file(filename);
@@ -474,7 +474,7 @@ void test_suite_5(void) {
     double zero = 0.0; /* msvc is silly (workaround for error C2124) */
 
     _TNt_array_ptr<char> filename = string_malloc(100*sizeof(char));
-    t_strcpy(filename,"/home/twinturbo/Desktop/checkedc-parson/tests/test_5.txt");
+    t_strcpy(filename,"/home/arun/CLionProjects/checkedc-parson/tests/test_5.txt");
     _TPtr<TJSON_Value> val_from_file = json_parse_file(filename);
 
     _TPtr<TJSON_Value> val = NULL;
@@ -558,8 +558,7 @@ void test_suite_5(void) {
     TEST(json_array_append_string(NULL, string_1) == JSONFailure);
     TEST(json_array_append_value(interests_arr, NULL) == JSONFailure);
     TEST(json_array_append_value(NULL, NULL) == JSONFailure);
-    _TPtr<int> temp = json_array_remove(NULL, 0);
-    TEST( *temp == JSONFailure);
+    TEST(json_array_remove(NULL, 0) == JSONFailure);
     TEST(json_array_replace_value(interests_arr, 0, NULL) == JSONFailure);
     t_strcpy(string_1,"lorem");
     TEST(json_array_replace_string(NULL, 0, string_1) == JSONFailure);
