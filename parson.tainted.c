@@ -147,7 +147,7 @@ _Tainted Tstruct json_array_t_t {
 };
 
 /* Various */
-static _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename);
+static _Nt_array_ptr<char> read_file(_Nt_array_ptr<const char> filename) ;
 _Mirror static void remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<const char> start_token, _Nt_array_ptr<const char> end_token);
 _Mirror static int                 hex_char_to_int(char c);
 static int _Unchecked      parse_utf16_hex(const char* string, unsigned int* result);
@@ -333,8 +333,8 @@ return 1;
 /*
  * Should be Tainted
  */
-_Tainted _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename) _Unchecked{
-    _TPtr<void> fp = t_fopen(filename, "r");
+static _Nt_array_ptr<char> read_file(_Nt_array_ptr<const char> filename) _Unchecked{
+    FILE* fp = fopen((const char*)filename, "r");
     size_t size_to_read = 0;
     size_t size_read = 0;
     long pos;
@@ -342,30 +342,31 @@ _Tainted _TNt_array_ptr<char> read_file(_TNt_array_ptr<const char> filename) _Un
     if (!fp) {
         return NULL;
     }
-    t_fseek(fp, 0L, SEEK_END);
-    pos = t_ftell(fp);
+    fseek((FILE *)fp, 0L, SEEK_END);
+    pos = ftell((FILE *)fp);
     if (pos < 0) {
-        t_fclose(fp);
+        fclose((FILE *)fp);
         return NULL;
     }
     size_to_read = pos;
-    t_rewind(fp);
+    rewind((FILE *)fp);
     // TODO: compiler isn't constant folding when checking bounds, so we need the spurious (size_t) 1 here.
-    _TNt_array_ptr<char> file_contents : count((size_t) 1 * size_to_read) = parson_string_tainted_malloc((size_t) 1 * size_to_read );
+    _Nt_array_ptr<char> file_contents : count((size_t) 1 * size_to_read) = parson_string_malloc((size_t) 1 * size_to_read );
     if (!file_contents) {
-        t_fclose(fp);
+        fclose((FILE *)fp);
         return NULL;
     }
-    size_read = t_fread<void>(file_contents, 1, size_to_read, fp);
-    if (size_read == 0 || t_ferror(fp)) {
-        t_fclose(fp);
-        parson_tainted_free(char, file_contents);
-        return NULL;
+    size_read = fread((void *)file_contents, 1, size_to_read, (FILE *)fp);
+    if (size_read == 0 || ferror((FILE *)fp)) {
+    fclose((FILE *)fp);
+
+    return NULL;
     }
-    t_fclose(fp);
-    //TODO: NEED TO NULL TERMINATE file_contents
-    return file_contents;
+fclose((FILE *)fp);
+file_contents[size_read] = '\0';
+return file_contents;
 }
+
 /*
 /*
  * Must be Tainted, as called ONLY by tainted functions
@@ -628,7 +629,7 @@ _Tainted _TPtr<TJSON_Array> json_array_init(_TPtr<TJSON_Value> wrapping_value) {
 /*
  * No Unchecked operation, hence no need to be tainted
  */
-static JSON_Status json_array_add(_TPtr<TJSON_Array> array, _TPtr<TJSON_Value> value) _Checked {
+static JSON_Status json_array_add(_TPtr<TJSON_Array> array, _TPtr<TJSON_Value> value) _Unchecked {
     if (array->count >= array->capacity) {
         size_t new_capacity = MAX(array->capacity * 2, STARTING_CAPACITY);
         if (json_array_resize(array, new_capacity) == JSONFailure) {
@@ -640,6 +641,7 @@ static JSON_Status json_array_add(_TPtr<TJSON_Array> array, _TPtr<TJSON_Value> v
     array->count++;
     return JSONSuccess;
 }
+
 /*
  * Need to Taint This
  *
@@ -1232,14 +1234,15 @@ _Tainted _Unchecked _TPtr<TJSON_Value> parse_number_value(_TNt_array_ptr<const c
     _TNt_array_ptr<const char> str_cpy = (_TNt_array_ptr<const char>)parson_string_tainted_malloc
             (str_len*sizeof(char));
     t_strcpy(str_cpy, string);
-    _TNt_array_ptr<char> end = NULL;
+    _TPtr<_TPtr<char>>end = (_TPtr<_TPtr<char>>)t_malloc(sizeof(_TPtr<char>));
+    *end = NULL;
     double number = 0;
-    number = t_strtod((_TNt_array_ptr<char>)str_cpy, (_TPtr<_TPtr<char>>)&end);
-    if (!is_decimal((_TNt_array_ptr<char>)str_cpy, (size_t)(t_strlen(string) - t_strlen(end)))) {
+    number = t_strtod((_TNt_array_ptr<char>)str_cpy, end);
+    if (!is_decimal((_TNt_array_ptr<char>)str_cpy, (size_t)(t_strlen(string) - t_strlen((_TNt_array_ptr<const char>)*end)))) {
         t_strcpy(string, str_cpy);
         return NULL;
     }
-    str_cpy = (_TNt_array_ptr<const char>)end;
+    str_cpy = (_TNt_array_ptr<const char>)(*end);
     t_strcpy(string, str_cpy);
     return json_value_init_number(number);
 }
@@ -1549,14 +1552,20 @@ tainted_bounded_string,
  * This API is exposed to the public and reads the payload input through from the user
  * Hence this function is best suggested to be tainted
  */
-_TPtr<TJSON_Value> json_parse_file(_TNt_array_ptr<const char>filename) {
-    _TNt_array_ptr<char> file_contents = read_file((_TNt_array_ptr<const char>)filename);
+_TPtr<TJSON_Value> json_parse_file(_Nt_array_ptr<const char>filename) {
+    _Nt_array_ptr<char> file_contents = read_file(filename);
     _TPtr<TJSON_Value> output_value = NULL;
     if (file_contents == NULL) {
         return NULL;
     }
-    output_value = json_parse_string((_TNt_array_ptr<char>)file_contents);
-    parson_tainted_free(char, file_contents);
+
+    _TNt_array_ptr<char> Tainted_file_contents = NULL;
+    int len = strlen(file_contents);
+    Tainted_file_contents = parson_string_tainted_malloc(len*sizeof(char));
+    tc_strcpy(Tainted_file_contents, file_contents);
+    output_value = json_parse_string(Tainted_file_contents);
+    parson_tainted_free(char, Tainted_file_contents);
+    parson_free(char, file_contents);
     return output_value;
 }
 /*
@@ -1576,15 +1585,20 @@ parse_value (first_arg,
 (size_t) arg_2));
 }
 
-_Tainted _TPtr<TJSON_Value> json_parse_file_with_comments(_TNt_array_ptr<const char> filename,
+_TPtr<TJSON_Value> json_parse_file_with_comments(_Nt_array_ptr<const char> filename,
 _TPtr<_TPtr<TJSON_Value>(_TNt_array_ptr<const char>, size_t)>parse_value) {
-_TNt_array_ptr<char> file_contents = read_file((_TNt_array_ptr<const char>)filename);
+_Nt_array_ptr<char> file_contents = read_file(filename);
 _TPtr<TJSON_Value> output_value = NULL;
 if (file_contents == NULL) {
 return NULL;
 }
-output_value = json_parse_string_with_comments(file_contents, parse_value);
-parson_tainted_free(char, file_contents);
+_TNt_array_ptr<char> Tainted_file_contents = NULL;
+int len = strlen(file_contents);
+Tainted_file_contents = parson_string_tainted_malloc(len *sizeof(char));
+tc_strcpy(Tainted_file_contents, file_contents);
+output_value = json_parse_string_with_comments(Tainted_file_contents, parse_value);
+parson_tainted_free(char, Tainted_file_contents);
+parson_free(char, file_contents);
 return output_value;
 }
 /*

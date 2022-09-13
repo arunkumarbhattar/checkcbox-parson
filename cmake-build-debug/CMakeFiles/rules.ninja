@@ -17,7 +17,7 @@
 rule C_COMPILER__final_Debug
   depfile = $DEP_FILE
   deps = gcc
-  command = /home/arun/CLionProjects/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = /home/twinturbo/Desktop/withoutAlign/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 
@@ -42,7 +42,7 @@ rule CUSTOM_COMMAND
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = /snap/clion/204/bin/cmake/linux/bin/cmake --regenerate-during-build -S/home/arun/CLionProjects/checkedc-parson -B/home/arun/CLionProjects/checkedc-parson/cmake-build-debug
+  command = /snap/clion/204/bin/cmake/linux/bin/cmake --regenerate-during-build -S/home/twinturbo/Desktop/checkedc-parson -B/home/twinturbo/Desktop/checkedc-parson/cmake-build-debug
   description = Re-running CMake...
   generator = 1
 

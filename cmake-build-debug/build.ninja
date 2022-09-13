@@ -39,7 +39,7 @@ include CMakeFiles/rules.ninja
 #############################################
 # Logical path to working directory; prefix for absolute paths.
 
-cmake_ninja_workdir = /home/arun/CLionProjects/checkedc-parson/cmake-build-debug/
+cmake_ninja_workdir = /home/twinturbo/Desktop/checkedc-parson/cmake-build-debug/
 # =============================================================================
 # Object build statements for EXECUTABLE target final
 
@@ -49,17 +49,17 @@ cmake_ninja_workdir = /home/arun/CLionProjects/checkedc-parson/cmake-build-debug
 
 build cmake_object_order_depends_target_final: phony || CMakeFiles/final.dir
 
-build CMakeFiles/final.dir/tests.c.o: C_COMPILER__final_Debug /home/arun/CLionProjects/checkedc-parson/tests.c || cmake_object_order_depends_target_final
+build CMakeFiles/final.dir/tests.c.o: C_COMPILER__final_Debug /home/twinturbo/Desktop/checkedc-parson/tests.c || cmake_object_order_depends_target_final
   DEP_FILE = CMakeFiles/final.dir/tests.c.o.d
   FLAGS = -g -fPIE -Wall -Wextra
-  INCLUDES = -I/home/arun/CLionProjects/checkedc-parson/parson.h
+  INCLUDES = -I/home/twinturbo/Desktop/checkedc-parson/parson.h
   OBJECT_DIR = CMakeFiles/final.dir
   OBJECT_FILE_DIR = CMakeFiles/final.dir
 
-build CMakeFiles/final.dir/parson.tainted.c.o: C_COMPILER__final_Debug /home/arun/CLionProjects/checkedc-parson/parson.tainted.c || cmake_object_order_depends_target_final
+build CMakeFiles/final.dir/parson.tainted.c.o: C_COMPILER__final_Debug /home/twinturbo/Desktop/checkedc-parson/parson.tainted.c || cmake_object_order_depends_target_final
   DEP_FILE = CMakeFiles/final.dir/parson.tainted.c.o.d
   FLAGS = -g -fPIE -Wall -Wextra
-  INCLUDES = -I/home/arun/CLionProjects/checkedc-parson/parson.h
+  INCLUDES = -I/home/twinturbo/Desktop/checkedc-parson/parson.h
   OBJECT_DIR = CMakeFiles/final.dir
   OBJECT_FILE_DIR = CMakeFiles/final.dir
 
@@ -86,7 +86,7 @@ build final: CXX_EXECUTABLE_LINKER__final_Debug CMakeFiles/final.dir/tests.c.o C
 # Utility command for edit_cache
 
 build CMakeFiles/edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cd /home/arun/CLionProjects/checkedc-parson/cmake-build-debug && /snap/clion/204/bin/cmake/linux/bin/ccmake -S/home/arun/CLionProjects/checkedc-parson -B/home/arun/CLionProjects/checkedc-parson/cmake-build-debug
+  COMMAND = cd /home/twinturbo/Desktop/checkedc-parson/cmake-build-debug && /snap/clion/204/bin/cmake/linux/bin/ccmake -S/home/twinturbo/Desktop/checkedc-parson -B/home/twinturbo/Desktop/checkedc-parson/cmake-build-debug
   DESC = Running CMake cache editor...
   pool = console
   restat = 1
@@ -98,7 +98,7 @@ build edit_cache: phony CMakeFiles/edit_cache.util
 # Utility command for rebuild_cache
 
 build CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cd /home/arun/CLionProjects/checkedc-parson/cmake-build-debug && /snap/clion/204/bin/cmake/linux/bin/cmake --regenerate-during-build -S/home/arun/CLionProjects/checkedc-parson -B/home/arun/CLionProjects/checkedc-parson/cmake-build-debug
+  COMMAND = cd /home/twinturbo/Desktop/checkedc-parson/cmake-build-debug && /snap/clion/204/bin/cmake/linux/bin/cmake --regenerate-during-build -S/home/twinturbo/Desktop/checkedc-parson -B/home/twinturbo/Desktop/checkedc-parson/cmake-build-debug
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -114,7 +114,7 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 # =============================================================================
 
 #############################################
-# Folder: /home/arun/CLionProjects/checkedc-parson/cmake-build-debug
+# Folder: /home/twinturbo/Desktop/checkedc-parson/cmake-build-debug
 
 build all: phony final
 
