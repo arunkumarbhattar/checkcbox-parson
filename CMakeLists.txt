@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
-
+set(CMAKE_C_COMPILER /home/twinturbo/Desktop/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang)
 project(checkedc-parson
         VERSION 0.1
         DESCRIPTION "An example application that simulates a typical image parsing program")
 
-set(CMAKE_C_COMPILER /home/arun/CLionProjects/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)

@@ -1,3 +1,3 @@
-/home/arun/CLionProjects/checkedc-parson/cmake-build-debug/CMakeFiles/final.dir
-/home/arun/CLionProjects/checkedc-parson/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/arun/CLionProjects/checkedc-parson/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/twinturbo/Desktop/checkedc-parson/cmake-build-debug/CMakeFiles/final.dir
+/home/twinturbo/Desktop/checkedc-parson/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/twinturbo/Desktop/checkedc-parson/cmake-build-debug/CMakeFiles/rebuild_cache.dir

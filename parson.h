@@ -64,6 +64,45 @@ _Tainted const enum json_result_t {
 };
 typedef int JSON_Status;
 
+
+//typedef _Decoy _Tainted Tstruct Spl_json_value_value_t_t {
+//unsigned int string;
+//unsigned int       number;
+//unsigned int object;
+//unsigned int array;
+//int          boolean;
+//int          null;
+//} Spl_TJSON_Value_Value;
+//
+//_Decoy _Tainted Tstruct Spl_json_value_t_t {
+//unsigned int parent;
+//JSON_Value_Type  type;
+//Spl_TJSON_Value_Value value;
+//};
+//
+//_Decoy _Tainted Tstruct Spl_json_object_t_t {
+//unsigned int wrapping_value;
+//unsigned int names;
+//unsigned int values;
+//unsigned int count;
+//unsigned int capacity;
+//};
+//
+//
+//_Decoy _Tainted Tstruct Spl_json_array_t_t {
+//unsigned int wrapping_value;
+//unsigned int items ;
+//unsigned int count;
+//unsigned int capacity;
+//};
+//
+//
+//Spl_TJSON_Value_Value Dummy_Spl_TJSON_Value_Value(void);
+//Tstruct Spl_json_value_t_t Dummy_Spl_json_value_t_t(void);
+//Tstruct Spl_json_object_t_t Dummy_Spl_json_object_t_t(void);
+//Tstruct Spl_json_array_t_t Dummy_Spl_json_array_t_t(void);
+
+
 _Tainted int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> s, _TPtr<int> len); // len is set after, not a constraint on string
 _Tainted JSON_Status       json_object_resize(_TPtr<TJSON_Object> object, size_t new_capacity);
 _Tainted _TNt_array_ptr<char> get_quoted_string(_TNt_array_ptr<const char> string,
@@ -92,11 +131,11 @@ _Itype_for_any(T) void json_set_allocation_functions(_TPtr<_TArray_ptr<T>(size_t
 void json_set_escape_slashes(int escape_slashes);
 
 /* Parses first JSON value in a file, returns NULL in case of error */
-_TPtr<TJSON_Value> json_parse_file(_TNt_array_ptr<const char> filename);
+_TPtr<TJSON_Value> json_parse_file(_Nt_array_ptr<const char> filename);
 
 /* Parses first JSON value in a file and ignores comments (/ * * / and //),
    returns NULL in case of error */
-_Tainted _TPtr<TJSON_Value> json_parse_file_with_comments(_TNt_array_ptr<const char> filename,
+_TPtr<TJSON_Value> json_parse_file_with_comments(_Nt_array_ptr<const char> filename,
 _TPtr<_TPtr<TJSON_Value>(_TNt_array_ptr<const char>, size_t)>parse_value);
 
 /*  Parses first JSON value in a string, returns NULL in case of error */
