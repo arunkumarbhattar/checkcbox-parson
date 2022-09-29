@@ -15,7 +15,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU
     add_link_options(-ldl -lstdc++)
 endif()
 add_executable(final "${CMAKE_SOURCE_DIR}/tests.c"
-        "${CMAKE_SOURCE_DIR}/parson.tainted.c"
+        "${CMAKE_SOURCE_DIR}/parson.wasm.c"
         )
 target_include_directories(final PUBLIC "${CMAKE_SOURCE_DIR}/parson.h"
         )

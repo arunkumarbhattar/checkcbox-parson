@@ -101,7 +101,7 @@ typedef int JSON_Status;
 //Tstruct Spl_json_value_t_t Dummy_Spl_json_value_t_t(void);
 //Tstruct Spl_json_object_t_t Dummy_Spl_json_object_t_t(void);
 //Tstruct Spl_json_array_t_t Dummy_Spl_json_array_t_t(void);
-
+//
 
 _Tainted int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> s, _TPtr<int> len); // len is set after, not a constraint on string
 _Tainted JSON_Status       json_object_resize(_TPtr<TJSON_Object> object, size_t new_capacity);
@@ -156,7 +156,7 @@ _TNt_array_ptr<char>      json_serialize_to_string(_TPtr<const TJSON_Value> valu
 /* Pretty serialization */
 _Tainted size_t      json_serialization_size_pretty(_TPtr<const TJSON_Value> value); /* returns 0 on fail */
 JSON_Status json_serialize_to_buffer_pretty(_TPtr<const TJSON_Value> value, _TNt_array_ptr<char> buf : byte_count(buf_size_in_bytes), size_t buf_size_in_bytes);
-JSON_Status json_serialize_to_file_pretty(_TPtr<const TJSON_Value> value, _TNt_array_ptr<const char> filename);
+JSON_Status json_serialize_to_file_pretty(_TPtr<const TJSON_Value> value, _Nt_array_ptr<const char> filename);
 _Tainted _TNt_array_ptr<char> json_serialize_to_string_pretty(_TPtr<const TJSON_Value> value);
 
 _Mirror void        json_free_serialized_string(_TNt_array_ptr<const char> string); /* frees string from json_serialize_to_string and json_serialize_to_string_pretty */

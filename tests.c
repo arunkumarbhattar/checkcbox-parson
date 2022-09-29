@@ -253,7 +253,7 @@ void test_suite_2(_TPtr<TJSON_Value> root_value) {
     TEST(json_object_get_array(root_object, value_type) == NULL);
     t_strcpy(value_type,"object.nested string");
     TEST(STREQ(json_object_dotget_string(root_object, value_type), "str"));
-    t_strcpy(value_type,"object.nested string");
+    t_strcpy(value_type,"object.nested true");
     TEST(json_object_dotget_boolean(root_object, value_type) == 1);
     t_strcpy(value_type,"object.nested false");
     TEST(json_object_dotget_boolean(root_object, value_type) == 0);
@@ -292,12 +292,10 @@ void test_suite_2(_TPtr<TJSON_Value> root_value) {
     TEST(STREQ(json_object_get_string(root_object, value_type), "https://www.example.com/search?q=12345"));
     t_strcpy(value_type,"escaped chars");
     TEST(STREQ(json_object_get_string(root_object, value_type), "\" \\ /"));
-
     t_strcpy(value_type,"empty object");
     TEST(json_object_get_object(root_object, value_type) != NULL);
     t_strcpy(value_type,"empty array");
     TEST(json_object_get_array(root_object, value_type) != NULL);
-
     TEST(json_object_get_wrapping_value(root_object) == root_value);
     t_strcpy(value_type,"string array");
     array = json_object_get_array(root_object, value_type);
@@ -310,6 +308,7 @@ void test_suite_2(_TPtr<TJSON_Value> root_value) {
 void test_suite_2_no_comments(void) {
     _TPtr<TJSON_Value> val_tainted = NULL;
     _TNt_array_ptr<char> filename = string_malloc(100*sizeof(char));
+
     t_strcpy(filename,"/home/twinturbo/Desktop/checkedc-parson/tests/test_2.txt");
     _TPtr<TJSON_Value> root_value = NULL;
     root_value = json_parse_file("/home/twinturbo/Desktop/checkedc-parson/tests/test_2.txt");
@@ -472,11 +471,9 @@ void test_suite_4() {
 }
 void test_suite_5(void) {
     double zero = 0.0; /* msvc is silly (workaround for error C2124) */
-
     _TNt_array_ptr<char> filename = string_malloc(100*sizeof(char));
     t_strcpy(filename,"/home/twinturbo/Desktop/checkedc-parson/tests/test_5.txt");
     _TPtr<TJSON_Value> val_from_file = json_parse_file("/home/twinturbo/Desktop/checkedc-parson/tests/test_5.txt");
-
     _TPtr<TJSON_Value> val = NULL;
     _TPtr<TJSON_Value> val_parent = NULL;
     _TPtr<TJSON_Object> obj = NULL;
@@ -503,10 +500,8 @@ void test_suite_5(void) {
     TEST(json_object_set_number(obj, string_1, 25) == JSONSuccess);
     t_strcpy(string_1,"registered");
     TEST(json_object_set_boolean(obj, string_1, 1) == JSONSuccess);
-
     t_strcpy(string_1,"interests");
     TEST(json_object_set_value(obj, string_1, json_value_init_array()) == JSONSuccess);
-    t_strcpy(string_1,"interests");
     interests_arr = json_object_get_array(obj, string_1);
     TEST(interests_arr != NULL);
     t_strcpy(string_1,"Writing");
@@ -518,7 +513,7 @@ void test_suite_5(void) {
     t_strcpy(string_1,"favorites.color");
     t_strcpy(string_2,"blue");
     TEST(json_object_dotset_string(obj, string_1, string_2) == JSONSuccess);
-    t_strcpy(string_1,"favorites.color");
+    t_strcpy(string_1,"favorites.sport");
     t_strcpy(string_2,"running");
     TEST(json_object_dotset_string(obj, string_1, string_2) == JSONSuccess);
     t_strcpy(string_1,"favorites.fruit");
