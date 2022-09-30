@@ -64,45 +64,6 @@ _Tainted const enum json_result_t {
 };
 typedef int JSON_Status;
 
-
-//typedef _Decoy _Tainted Tstruct Spl_json_value_value_t_t {
-//unsigned int string;
-//unsigned int       number;
-//unsigned int object;
-//unsigned int array;
-//int          boolean;
-//int          null;
-//} Spl_TJSON_Value_Value;
-//
-//_Decoy _Tainted Tstruct Spl_json_value_t_t {
-//unsigned int parent;
-//JSON_Value_Type  type;
-//Spl_TJSON_Value_Value value;
-//};
-//
-//_Decoy _Tainted Tstruct Spl_json_object_t_t {
-//unsigned int wrapping_value;
-//unsigned int names;
-//unsigned int values;
-//unsigned int count;
-//unsigned int capacity;
-//};
-//
-//
-//_Decoy _Tainted Tstruct Spl_json_array_t_t {
-//unsigned int wrapping_value;
-//unsigned int items ;
-//unsigned int count;
-//unsigned int capacity;
-//};
-//
-//
-//Spl_TJSON_Value_Value Dummy_Spl_TJSON_Value_Value(void);
-//Tstruct Spl_json_value_t_t Dummy_Spl_json_value_t_t(void);
-//Tstruct Spl_json_object_t_t Dummy_Spl_json_object_t_t(void);
-//Tstruct Spl_json_array_t_t Dummy_Spl_json_array_t_t(void);
-//
-
 _Tainted int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> s, _TPtr<int> len); // len is set after, not a constraint on string
 _Tainted JSON_Status       json_object_resize(_TPtr<TJSON_Object> object, size_t new_capacity);
 _Tainted _TNt_array_ptr<char> get_quoted_string(_TNt_array_ptr<const char> string,
@@ -150,7 +111,7 @@ _TPtr<_TPtr<TJSON_Value>(_TNt_array_ptr<const char>, size_t)>parse_value);
 /* Serialization */
 size_t      json_serialization_size(_TPtr<const TJSON_Value> value); /* returns 0 on fail */
 JSON_Status json_serialize_to_buffer(_TPtr<const TJSON_Value> value, _TNt_array_ptr<char> buf : byte_count(buf_size_in_bytes), size_t buf_size_in_bytes);
-JSON_Status json_serialize_to_file(_TPtr<const TJSON_Value> value, _TNt_array_ptr<const char> filename);
+JSON_Status json_serialize_to_file(_TPtr<const TJSON_Value> value, _Nt_array_ptr<char> filename);
 _TNt_array_ptr<char>      json_serialize_to_string(_TPtr<const TJSON_Value> value);
 
 /* Pretty serialization */
@@ -202,6 +163,64 @@ _Mirror size_t        json_object_get_count   (_TPtr<const TJSON_Object>object);
 _Mirror _TNt_array_ptr<const char> json_object_get_name    (_TPtr<const TJSON_Object> object, size_t index);
 _TPtr<TJSON_Value> json_object_get_value_at(_TPtr<const TJSON_Object> object, size_t index);
 _Mirror _TPtr<TJSON_Value> json_object_get_wrapping_value(_TPtr<const TJSON_Object> object);
+
+
+/* Various */
+static _Nt_array_ptr<char> read_file(_Nt_array_ptr<const char> filename) ;
+_Mirror static void remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<const char> start_token, _Nt_array_ptr<const char> end_token);
+_Mirror static int                 hex_char_to_int(char c);
+static int _Unchecked      parse_utf16_hex(const char* string, unsigned int* result);
+static int                 num_bytes_in_utf8_sequence(unsigned char c);
+_Tainted int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> s, _TPtr<int> len); // len is set after, not a constraint on string
+static int is_valid_utf8(_TNt_array_ptr<const char> string : bounds(string, string + string_len), size_t string_len);
+_Tainted int                 is_decimal(_TNt_array_ptr<const char> string : count(length), size_t length);
+
+/* JSON Object */
+_Tainted _TPtr<TJSON_Object> json_object_init(_TPtr<TJSON_Value> wrapping_value);
+static JSON_Status       json_object_add(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name, _TPtr<TJSON_Value> value);
+_Tainted JSON_Status       json_object_addn(_TPtr<TJSON_Object> object,
+_TNt_array_ptr<const char> name : count(name_len),
+        size_t name_len,
+_TPtr<TJSON_Value> value);
+_Tainted JSON_Status       json_object_resize(_TPtr<TJSON_Object> object, size_t new_capacity);
+_Mirror static _TPtr<TJSON_Value>      json_object_getn_value(_TPtr<const TJSON_Object> object, _TNt_array_ptr<const char> name : count(name_len), size_t name_len);
+_Tainted JSON_Status       json_object_remove_internal(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name, int free_value);
+_Tainted JSON_Status       json_object_dotremove_internal(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name, int free_value);
+_Tainted void              json_object_free(_TPtr<TJSON_Object> object);
+
+/* JSON Array */
+static _TPtr<TJSON_Array> json_array_init(_TPtr<TJSON_Value> wrapping_value);
+static JSON_Status      json_array_add(_TPtr<TJSON_Array> array, _TPtr<TJSON_Value> value);
+static JSON_Status      json_array_resize(_TPtr<TJSON_Array> array, size_t new_capacity);
+_Mirror static void             json_array_free(_TPtr<TJSON_Array> array);
+
+/* JSON Value */
+static _TPtr<TJSON_Value> json_value_init_string_no_copy(_TNt_array_ptr<char> string);
+
+/* Parser */
+static JSON_Status            skip_quotes(_TNt_array_ptr<const char> string);
+_Tainted int _Unchecked parse_utf16(_TNt_array_ptr<const char> unprocessed, _TNt_array_ptr<char> processed);
+_Callback static _TNt_array_ptr<char>    process_string(_TNt_array_ptr<const char> input : count(len), size_t len);
+/*
+ * It does not matter if the function pointer (callback) does not bear tainted pointers
+ *
+ */
+_Tainted _TNt_array_ptr<char> get_quoted_string(_TNt_array_ptr<const char> string,
+_TPtr<_TNt_array_ptr<char>(_TNt_array_ptr<const char> input : count(len), size_t len)> process_string);
+static _TPtr<TJSON_Value>       parse_object_value(_TNt_array_ptr<const char> string, size_t nesting);
+static _TPtr<TJSON_Value>       parse_array_value(_TNt_array_ptr<const char> string, size_t nesting);
+static _TPtr<TJSON_Value>       parse_boolean_value(_TNt_array_ptr<const char> string);
+_Tainted _TPtr<TJSON_Value> parse_number_value(_TNt_array_ptr<const char> string);
+static _TPtr<TJSON_Value>       parse_null_value(_TNt_array_ptr<const char> string);
+
+
+/* Serialization */
+_Tainted int   json_serialize_to_buffer_r(_TPtr<const TJSON_Value> value, _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len), int level, int is_pretty, _TNt_array_ptr<char> num_buf, _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
+_Tainted int            json_serialize_string(_TNt_array_ptr<const char> string, _TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len), _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
+static int _Mirror _Unchecked append_indent(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
+int level, _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
+static int _Mirror _Unchecked append_string(_TNt_array_ptr<char> buf : bounds(buf_start, buf_start + buf_len),
+const char* string, _TNt_array_ptr<char> buf_start : byte_count(buf_len), size_t buf_len);
 
 /* Functions to check if object has a value with a specific name. Returned value is 1 if object has
  * a value and 0 if it doesn't. dothas functions behave exactly like dotget functions. */

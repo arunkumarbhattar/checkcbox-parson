@@ -1909,6 +1909,7 @@ _Tainted _TPtr<TJSON_Value> json_value_init_object (void) {
     new_value->value.object = json_object_init(new_value);
     if (!new_value->value.object) {
         parson_tainted_free(TJSON_Value, new_value);
+        parson_tainted_free(TJSON_Value, new_value);
         return NULL;
     }
     return new_value;

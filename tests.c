@@ -50,14 +50,14 @@ void test_suite_2_with_comments(void);
 void test_suite_3(void); /* Test parsing valid and invalid strings */
 void test_suite_4(void); /* Test deep copy function */
 void test_suite_5(void); /* Test building json values from scratch */
-//void test_suite_6(void); /* Test value comparing verification */
-//void test_suite_7(void); /* Test schema validation */
-//void test_suite_8(void); /* Test serialization */
-//void test_suite_9(void); /* Test serialization (pretty) */
-//void test_suite_10(void); /* Testing for memory leaks */
-//void test_suite_11(void); /* Additional things that require testing */
+void test_suite_6(void); /* Test value comparing verification */
+void test_suite_7(void); /* Test schema validation */
+void test_suite_8(void); /* Test serialization */
+void test_suite_9(void); /* Test serialization (pretty) */
+void test_suite_10(void); /* Testing for memory leaks */
+void test_suite_11(void); /* Additional things that require testing */
 
-//void print_commits_info(const char *username, const char *repo);
+void print_commits_info(_TNt_array_ptr<const char> username, _TNt_array_ptr<const char> repo);
 void persistence_example(void);
 void serialization_example(void);
 _Callback _TPtr<TJSON_Value>       parse_value(_TNt_array_ptr<const char> string, size_t nesting);
@@ -65,7 +65,7 @@ static int malloc_count;
 static _TPtr<_TArray_ptr<void>(size_t s) : byte_count(s)>counted_malloc;
 static _TPtr<void (_TArray_ptr<void>: byte_count(0))> counted_free;
 
-static char * read_file(const char * filename);
+static char * read_file_test_suite(const char * filename);
 
 static int tests_passed;
 static int tests_failed;
@@ -81,23 +81,34 @@ return _Tainted_Assume_bounds_cast<_TNt_array_ptr<char>>(p, count(sz));
 
 int main() {
     /* Example functions from readme file:      */
-    /* print_commits_info("torvalds", "linux"); */
+    /*  */
     /* serialization_example(); */
     /* persistence_example(); */
-    json_set_allocation_functions(counted_malloc, counted_free);
+    //json_set_allocation_functions(counted_malloc, counted_free);
     test_suite_1();
     test_suite_2_no_comments();
     test_suite_2_with_comments();
     test_suite_3();
     test_suite_4();
     test_suite_5();
-    /*
     test_suite_6();
     test_suite_7();
     test_suite_8();
     test_suite_9();
     test_suite_10();
     test_suite_11();
+    _TNt_array_ptr<char> name1 = string_malloc(10);
+    _TNt_array_ptr<char> name2 = string_malloc(10);
+    t_strcpy(name1, "torvalds");
+    t_strcpy(name2, "linux");
+    //print_commits_info(name1, name2);
+    /*
+
+
+
+
+
+
 	*/
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
@@ -208,7 +219,6 @@ void test_suite_2(_TPtr<TJSON_Value> root_value) {
     TEST(json_object_dothas_value_of_type(root_object, value_type, JSONNull));
     t_strcpy(value_type,"object.nested object");
     TEST(!json_object_dothas_value_of_type(root_object, value_type, JSONNull));
-
     t_strcpy(value_type,"string");
     TEST(STREQ(json_object_get_string(root_object, value_type), "lorem ipsum"));
     t_strcpy(value_type,"utf string");
@@ -327,6 +337,8 @@ void test_suite_2_with_comments(void) {
     test_suite_2(root_value);
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string(root_value))));
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string_pretty(root_value))));
+    json_value_free(root_value);
+    t_free(filename);
     json_value_free(root_value);
 }
 
@@ -454,8 +466,9 @@ void test_suite_3(void) {
     t_strcpy(filename,"[-1.7976931348623157e309]");
     TEST(json_parse_string(filename) == NULL);
     TEST(malloc_count == 0);
+    t_free(temp_string);
+    t_free(filename);
 }
-
 void test_suite_4() {
     _TPtr<TJSON_Value> val_tainted = NULL;
     _TNt_array_ptr<char> filename = string_malloc(100*sizeof(char));
@@ -468,6 +481,7 @@ void test_suite_4() {
     a_copy = json_value_deep_copy(a);
     TEST(a_copy != NULL);
     TEST(json_value_equals(a, a_copy));
+    json_value_free(a_copy);
 }
 void test_suite_5(void) {
     double zero = 0.0; /* msvc is silly (workaround for error C2124) */
@@ -688,168 +702,191 @@ void test_suite_5(void) {
     TEST(json_object_set_number(obj, string_1, 0.0 / zero) == JSONFailure);
     t_strcpy(string_1,"num");
     TEST(json_object_set_number(obj,string_1 , 1.0 / zero) == JSONFailure);
+    t_free(string_1);
+    t_free(string_2);
+}
+void test_suite_6(void) {
+    _TPtr<TJSON_Value> a = NULL;
+    _TPtr<TJSON_Value> b = NULL;
+    a = json_parse_file("/home/twinturbo/Desktop/checkedc-parson/tests/test_2.txt");
+    b = json_parse_file("/home/twinturbo/Desktop/checkedc-parson/tests/test_2.txt");
+    TEST(json_value_equals(a, b));
+    _TNt_array_ptr<char> string_1 = string_malloc(100*sizeof(char));
+    _TNt_array_ptr<char> string_2 = string_malloc(100*sizeof(char));
+    t_strcpy(string_1,"string");
+    t_strcpy(string_2,"eki");
+    json_object_set_string(json_object(a), string_1, string_2);
+    TEST(!json_value_equals(a, b));
+    a = json_value_deep_copy(b);
+    TEST(json_value_equals(a, b));
+    t_strcpy(string_1,"string array");
+    json_array_append_number(json_object_get_array(json_object(b), string_1), 1337);
+    TEST(!json_value_equals(a, b));
+    t_free(string_1);
+    t_free(string_2);
+}
+void test_suite_7(void) {
+    _TPtr<TJSON_Value> val_from_file = json_parse_file("/home/twinturbo/Desktop/checkedc-parson/tests/test_5.txt");
+    _TPtr<TJSON_Value> schema = json_value_init_object();
+    _TPtr<TJSON_Object> schema_obj = json_value_get_object(schema);
+    _TPtr<TJSON_Array> interests_arr = NULL;
+    _TNt_array_ptr<char> string_1 = string_malloc(100*sizeof(char));
+    _TNt_array_ptr<char> string_2 = string_malloc(100*sizeof(char));
+    t_strcpy(string_1,"first");
+    t_strcpy(string_2,"");
+    json_object_set_string(schema_obj, string_1, string_2);
+    t_strcpy(string_1,"last");
+    t_strcpy(string_2,"");
+    json_object_set_string(schema_obj, string_1, string_2);
+    t_strcpy(string_1,"age");
+    json_object_set_number(schema_obj, string_1, 0);
+    t_strcpy(string_1,"interests");
+    json_object_set_value(schema_obj, string_1, json_value_init_array());
+    interests_arr = json_object_get_array(schema_obj, string_1);
+    t_strcpy(string_2,"");
+    json_array_append_string(interests_arr, string_2);
+    t_strcpy(string_2,"favorites");
+    json_object_set_null(schema_obj, string_2);
+    TEST(json_validate(schema, val_from_file) == JSONSuccess);
+    t_strcpy(string_1,"age");
+    t_strcpy(string_2,"");
+    json_object_set_string(schema_obj, string_1, string_2);
+    TEST(json_validate(schema, val_from_file) == JSONFailure);
+    t_free(string_1);
+    t_free(string_2);
 }
 
-//void test_suite_6(void) {
-//    const char *filename = "tests/test_2.txt";
-//    JSON_Value *a = NULL;
-//    JSON_Value *b = NULL;
-//    a = json_parse_file(filename);
-//    b = json_parse_file(filename);
-//    TEST(json_value_equals(a, b));
-//    json_object_set_string(json_object(a), "string", "eki");
-//    TEST(!json_value_equals(a, b));
-//    a = json_value_deep_copy(b);
-//    TEST(json_value_equals(a, b));
-//    json_array_append_number(json_object_get_array(json_object(b), "string array"), 1337);
-//    TEST(!json_value_equals(a, b));
-//}
-//
-//void test_suite_7(void) {
-//    JSON_Value *val_from_file = json_parse_file("tests/test_5.txt");
-//    JSON_Value *schema = json_value_init_object();
-//    JSON_Object *schema_obj = json_value_get_object(schema);
-//    JSON_Array *interests_arr = NULL;
-//    json_object_set_string(schema_obj, "first", "");
-//    json_object_set_string(schema_obj, "last", "");
-//    json_object_set_number(schema_obj, "age", 0);
-//    json_object_set_value(schema_obj, "interests", json_value_init_array());
-//    interests_arr = json_object_get_array(schema_obj, "interests");
-//    json_array_append_string(interests_arr, "");
-//    json_object_set_null(schema_obj, "favorites");
-//    TEST(json_validate(schema, val_from_file) == JSONSuccess);
-//    json_object_set_string(schema_obj, "age", "");
-//    TEST(json_validate(schema, val_from_file) == JSONFailure);
-//}
-//
-//void test_suite_8(void) {
-//    const char *filename = "tests/test_2.txt";
-//    const char *temp_filename = "tests/test_2_serialized.txt";
-//    JSON_Value *a = NULL;
-//    JSON_Value *b = NULL;
-//    char *buf = NULL;
-//    size_t serialization_size = 0;
-//    a = json_parse_file(filename);
-//    TEST(json_serialize_to_file(a, temp_filename) == JSONSuccess);
-//    b = json_parse_file(temp_filename);
-//    TEST(json_value_equals(a, b));
-//    remove(temp_filename);
-//    serialization_size = json_serialization_size(a);
-//    buf = json_serialize_to_string(a);
-//    TEST((strlen(buf)+1) == serialization_size);
-//}
-//
-//void test_suite_9(void) {
-//    const char *filename = "tests/test_2_pretty.txt";
-//    const char *temp_filename = "tests/test_2_serialized_pretty.txt";
-//    char *file_contents = NULL;
-//    char *serialized = NULL;
-//    JSON_Value *a = NULL;
-//    JSON_Value *b = NULL;
-//    size_t serialization_size = 0;
-//    a = json_parse_file(filename);
-//    TEST(json_serialize_to_file_pretty(a, temp_filename) == JSONSuccess);
-//    b = json_parse_file(temp_filename);
-//    TEST(json_value_equals(a, b));
-//    remove(temp_filename);
-//    serialization_size = json_serialization_size_pretty(a);
-//    serialized = json_serialize_to_string_pretty(a);
-//    TEST((strlen(serialized)+1) == serialization_size);
-//
-//    file_contents = read_file(filename);
-//
-//    TEST(STREQ(file_contents, serialized));
-//}
-//
-//void test_suite_10(void) {
-//    JSON_Value *val;
-//    char *serialized;
-//
-//    malloc_count = 0;
-//
-//    val = json_parse_file("tests/test_1_1.txt");
-//    json_value_free(val);
-//
-//    val = json_parse_file("tests/test_1_3.txt");
-//    json_value_free(val);
-//
-//    val = json_parse_file("tests/test_2.txt");
-//    serialized = json_serialize_to_string_pretty(val);
-//    json_free_serialized_string(serialized);
-//    json_value_free(val);
-//
-//    val = json_parse_file("tests/test_2_pretty.txt");
-//    json_value_free(val);
-//
-//    TEST(malloc_count == 0);
-//}
-//
-//void test_suite_11() {
-//    const char * array_with_slashes = "[\"a/b/c\"]";
-//    const char * array_with_escaped_slashes = "[\"a\\/b\\/c\"]";
-//    char *serialized = NULL;
-//    JSON_Value *value = json_parse_string(array_with_slashes);
-//
-//    serialized = json_serialize_to_string(value);
-//    TEST(STREQ(array_with_escaped_slashes, serialized));
-//
-//    json_set_escape_slashes(0);
-//    serialized = json_serialize_to_string(value);
-//    TEST(STREQ(array_with_slashes, serialized));
-//
-//    json_set_escape_slashes(1);
-//    serialized = json_serialize_to_string(value);
-//    TEST(STREQ(array_with_escaped_slashes, serialized));
-//}
+void test_suite_8(void) {
+    _TPtr<TJSON_Value> a = NULL;
+    _TPtr<TJSON_Value> b = NULL;
+    _TNt_array_ptr<char> buf = NULL;
+    size_t serialization_size = 0;
+    a = json_parse_file("/home/twinturbo/Desktop/checkedc-parson/tests/test_2.txt");
+    TEST(json_serialize_to_file(a, "/home/twinturbo/Desktop/checkedc-parson/tests/test_2_serialized.txt") == JSONSuccess);
+    b = json_parse_file("/home/twinturbo/Desktop/checkedc-parson/tests/test_2_serialized.txt");
+    TEST(json_value_equals(a, b));
+    remove("/home/twinturbo/Desktop/checkedc-parson/tests/test_2_serialized.txt");
+    serialization_size = json_serialization_size(a);
+    buf = json_serialize_to_string(a);
+    long buf_len = t_strlen(buf);
+    const char* checkedBuf = (const char*)malloc(buf_len*sizeof(char));
+    t_strcpy(checkedBuf, buf);
+    TEST((strlen(checkedBuf)+1) == serialization_size);
+}
 
-//void print_commits_info(const char *username, const char *repo) {
-//    _TPtr<TJSON_Value> root_value = NULL;
-//    _TPtr<TJSON_Array> commits = NULL;
-//    _TPtr<TJSON_Object> commit = NULL;
-//    size_t i;
+void test_suite_9(void) {
+    char* file_contents = NULL;
+    _TNt_array_ptr<char> serialized = NULL;
+    _TPtr<TJSON_Value> a = NULL;
+    _TPtr<TJSON_Value> b = NULL;
+    size_t serialization_size = 0;
+    a = json_parse_file("/home/twinturbo/Desktop/checkedc-parson/tests/test_2_pretty.txt");
+    TEST(json_serialize_to_file_pretty(a, "/home/twinturbo/Desktop/checkedc-parson/tests/test_2_serialized_pretty.txt") == JSONSuccess);
+    b = json_parse_file("/home/twinturbo/Desktop/checkedc-parson/tests/test_2_serialized_pretty.txt");
+    TEST(json_value_equals(a, b));
+    remove("/home/twinturbo/Desktop/checkedc-parson/tests/test_2_serialized_pretty.txt");
+    serialization_size = json_serialization_size_pretty(a);
+    serialized = json_serialize_to_string_pretty(a);
+    TEST((t_strlen(serialized)+1) == serialization_size);
+
+    file_contents = read_file_test_suite("/home/twinturbo/Desktop/checkedc-parson/tests/test_2_pretty.txt");
+    t_printf("The value is %d\n", t_strcmp(file_contents, serialized));
+    TEST(STREQ(file_contents, serialized));
+}
 //
-//    char curl_command[512];
-//    char cleanup_command[256];
-//    char output_filename[] = "commits.json";
+void test_suite_10(void) {
+    _TPtr<TJSON_Value> val = NULL;
+    _TNt_array_ptr<char> serialized = NULL;
+
+    malloc_count = 0;
+
+    val = json_parse_file("/home/twinturbo/Desktop/checkedc-parson/tests/test_1_1.txt");
+    json_value_free(val);
+
+    val = json_parse_file("/home/twinturbo/Desktop/checkedc-parson/tests/test_1_3.txt");
+    json_value_free(val);
+
+    val = json_parse_file("/home/twinturbo/Desktop/checkedc-parson/tests/test_2.txt");
+    serialized = json_serialize_to_string_pretty(val);
+    json_free_serialized_string(serialized);
+    json_value_free(val);
+
+    val = json_parse_file("/home/twinturbo/Desktop/checkedc-parson/tests/test_2_pretty.txt");
+    json_value_free(val);
+
+    TEST(malloc_count == 0);
+}
 //
-//    /* it ain't pretty, but it's not a libcurl tutorial */
-//    sprintf(curl_command,
-//        "curl -s \"https://api.github.com/repos/%s/%s/commits\" > %s",
-//        username, repo, output_filename);
-//    sprintf(cleanup_command, "rm -f %s", output_filename);
-//    system(curl_command);
-//
-//    /* parsing json and validating output */
-//    _Nt_array_ptr<char> filename = string_malloc(100*sizeof(char));
-//    tc_strcpy(filename,output_filename);
-//    root_value = json_parse_file(filename);
-//    if (json_value_get_type(root_value) != JSONArray) {
-//        system(cleanup_command);
-//        return;
-//    }
-//
-//    /* getting array from root value and printing commit info */
-//    commits = json_value_get_array(root_value);
-//    printf("%-10.10s %-10.10s %s\n", "Date", "SHA", "Author");
-//    for (i = 0; i < json_array_get_count(commits); i++) {
-//        commit = json_array_get_object(commits, i);
-//        _TNt_array_ptr<char> string_1 = string_malloc(100*sizeof(char));
-//        t_strcpy(string_1,"commit.author.date");
-//        _TNt_array_ptr<char> string_2 = string_malloc(100*sizeof(char));
-//        t_strcpy(string_2,"sha");
-//        _TNt_array_ptr<char> string_3 = string_malloc(100*sizeof(char));
-//        t_strcpy(string_3, "commit.author.name");
-//
-//        printf("%.10s %.10s %s\n",
-//               json_object_dotget_string(commit, string_1),
-//               json_object_get_string(commit, string_2),
-//               json_object_dotget_string(commit,string_3));
-//    }
-//
-//    /* cleanup code */
-//    json_value_free(root_value);
-//    system(cleanup_command);
-//}
+void test_suite_11() {
+    _TNt_array_ptr<char> array_with_slashes = string_malloc(100*sizeof(char));
+    _TNt_array_ptr<char> array_with_escaped_slashes = string_malloc(100*sizeof(char));
+    t_strcpy(array_with_slashes, "[\"a/b/c\"]");
+    t_strcpy(array_with_escaped_slashes, "[\"a\\/b\\/c\"]");
+    _TNt_array_ptr<char> serialized = NULL;
+    _TPtr<TJSON_Value> value = json_parse_string(array_with_slashes);
+
+    serialized = json_serialize_to_string(value);
+    TEST(STREQ(array_with_escaped_slashes, serialized));
+
+    json_set_escape_slashes(0);
+    serialized = json_serialize_to_string(value);
+    TEST(STREQ(array_with_slashes, serialized));
+
+    json_set_escape_slashes(1);
+    serialized = json_serialize_to_string(value);
+    TEST(STREQ(array_with_escaped_slashes, serialized));
+}
+
+void print_commits_info(_TNt_array_ptr<const char> username, _TNt_array_ptr<const char> repo) {
+    _TPtr<TJSON_Value> root_value = NULL;
+    _TPtr<TJSON_Array> commits = NULL;
+    _TPtr<TJSON_Object> commit = NULL;
+    size_t i;
+
+    _TNt_array_ptr<char> curl_command = string_malloc (512*sizeof(char));
+    _TNt_array_ptr<char>  cleanup_command  = string_malloc (256*sizeof(char));
+    _TNt_array_ptr<char>  output_filename = string_malloc (10*sizeof(char));
+    t_strcpy(output_filename, "commits.json");
+
+    /* it ain't pretty, but it's not a libcurl tutorial */
+    t_sprintf(curl_command,
+        "curl -s \"https://api.github.com/repos/%s/%s/commits\" > %s",
+        username, repo, output_filename);
+    t_sprintf(cleanup_command, "rm -f %s", output_filename);
+    t_system(curl_command);
+
+    /* parsing json and validating output */
+    _TNt_array_ptr<char> filename = string_malloc(100*sizeof(char));
+    t_strcpy(filename,output_filename);
+
+    root_value = json_parse_file("commits.json");
+    if (json_value_get_type(root_value) != JSONArray) {
+        t_system(cleanup_command);
+        return;
+    }
+
+    /* getting array from root value and printing commit info */
+    commits = json_value_get_array(root_value);
+    printf("%-10.10s %-10.10s %s\n", "Date", "SHA", "Author");
+    for (i = 0; i < json_array_get_count(commits); i++) {
+        commit = json_array_get_object(commits, i);
+        _TNt_array_ptr<char> string_1 = string_malloc(100*sizeof(char));
+        t_strcpy(string_1,"commit.author.date");
+        _TNt_array_ptr<char> string_2 = string_malloc(100*sizeof(char));
+        t_strcpy(string_2,"sha");
+        _TNt_array_ptr<char> string_3 = string_malloc(100*sizeof(char));
+        t_strcpy(string_3, "commit.author.name");
+
+        printf("%.10s %.10s %s\n",
+               json_object_dotget_string(commit, string_1),
+               json_object_get_string(commit, string_2),
+               json_object_dotget_string(commit,string_3));
+    }
+
+    /* cleanup code */
+    json_value_free(root_value);
+    t_system(cleanup_command);
+}
 
 //void persistence_example(void) {
 //    JSON_Value *schema = json_parse_string("{\"name\":\"\"}");
@@ -885,38 +922,38 @@ void test_suite_5(void) {
 //    json_value_free(root_value);
 //}
 //
-//static char * read_file(const char * filename) {
-//    FILE *fp = fopen(filename, "r");
-//    size_t size_to_read = 0;
-//    size_t size_read = 0;
-//    long pos;
-//    char *file_contents;
-//    if (!fp) {
-//        return NULL;
-//    }
-//    fseek(fp, 0L, SEEK_END);
-//    pos = ftell(fp);
-//    if (pos < 0) {
-//        fclose(fp);
-//        return NULL;
-//    }
-//    size_to_read = pos;
-//    rewind(fp);
-//    file_contents = (char*)malloc(sizeof(char) * (size_to_read + 1));
-//    if (!file_contents) {
-//        fclose(fp);
-//        return NULL;
-//    }
-//    size_read = fread(file_contents, 1, size_to_read, fp);
-//    if (size_read == 0 || ferror(fp)) {
-//        fclose(fp);
-//        free(file_contents);
-//        return NULL;
-//    }
-//    fclose(fp);
-//    file_contents[size_read] = '\0';
-//    return file_contents;
-//}
+static char * read_file_test_suite(const char * filename) {
+    FILE *fp = fopen(filename, "r");
+    size_t size_to_read = 0;
+    size_t size_read = 0;
+    long pos;
+    char *file_contents;
+    if (!fp) {
+        return NULL;
+    }
+    fseek(fp, 0L, SEEK_END);
+    pos = ftell(fp);
+    if (pos < 0) {
+        fclose(fp);
+        return NULL;
+    }
+    size_to_read = pos;
+    rewind(fp);
+    file_contents = (char*)malloc(sizeof(char) * (size_to_read + 1));
+    if (!file_contents) {
+        fclose(fp);
+        return NULL;
+    }
+    size_read = fread(file_contents, 1, size_to_read, fp);
+    if (size_read == 0 || ferror(fp)) {
+        fclose(fp);
+        free(file_contents);
+        return NULL;
+    }
+    fclose(fp);
+    file_contents[size_read] = '\0';
+    return file_contents;
+}
 
 //static _TArray_ptr<void> counted_malloc(size_t size) {
 //    _TArray_ptr<void> res = (_TArray_ptr<void> )t_malloc<void>(size);
