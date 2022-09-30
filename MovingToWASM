@@ -1,0 +1,102 @@
+ONE IMPORTANT THING -->
+
+1.) The Moment you Insert Decoy Template-Sibling Pair Definitions --> You should have all your Tainted Functions Moved to WASM Sandbox
+
+Steps I followed -->
+
+1.) Annotated the entire parsons.c 
+
+2.) Ran CheckMate over it -->
+Checkmate generated parsons.wasm.c and Taintedparson.c and h (which hold tainted definitions that we are going to move to the tainted region)
+
+Now copy Taintedparson.c and .h to CheckCBox ISC where we will Move to the WASM Sandbox .
+
+when you hit make. You will see a bunch of errors
+. 
+These errors are errors rise from usecases that are not fully yet handled in the CheckMate automation -->
+
+1.) error: unknown type name 'size_t' 
+Solution --> I added this to the top of Taintedparson.h --> #include <stddef.h> 
+
+Reason 
+--> stdlib function headers need to be manually inserted in Taintedparson.h -->
+--> Automatic insertion of Header files NOT handled .
+
+2.) Taintedparson.c:50:1: error: unknown type name 'TJSON_Value_Value'; did you mean 'JSON_Value_Type'?
+
+Reason --> While inserting Structures --> order has gon off. Thus Structure forward declaration type issues arise 
+
+Solution:
+--> Insert typedef int JSON_Value_Type; and typedef int JSON_Status; manually into Taintedparson.h 
+--> Took the definition of TJSON_Value_Value and placed it on top 
+
+3.) Taintedparson.c:47:8: error: redefinition of 'json_value_value_t_t'
+
+Reason --> CheckMate inserts the above defintion twice --> Once as a Tstruct and once as a typedef 
+Solution --> Remove the duplicate definition (the one without the type )
+
+4.) Taintedparson.c:74:10: error: use of undeclared identifier 'SIZE_MAX'
+
+Reason --> Headers are not inserted 
+
+Soluton --> Insert #include <stdint.h> 
+
+
+5.)  error: use of undeclared identifier 'STARTING_CAPACITY' 
+
+Reason --> Macros defining constants are not inserted 
+
+Insert --> 
+#define STARTING_CAPACITY 16
+#define MAX_NESTING       1000
+#define NUM_BUF_SIZE 64
+#define FLOAT_FORMAT "%1.17g" 
+
+
+*************************************************************************************************************************
+Now hitting make will result in successful compilation ----->
+WARNING: wasm-clang compiler will not notify you if you forgot to include certain headers. 
+So make sure you include all headers and do not blindly rely on compiler notification.
+
+--> By Now you will have Tainted_wasm.c and Tainted_wasm.h 
+
+--> Move these files to wasm_readable_definitions
+
+--> Now compile the definitions into a WASM library -->
+
+--> This can be done by compiling target --> isc_final_final
+
+**************************************************************************************************************************
+
+Now Your compiled library is all ready to be ignited -->
+copy the archive file to static libary directory of the checkec-parsons 
+
+Now you can compile your code -->
+
+************************************************************************
+Now while compiling parson.wasm.c --. Here are the common errors you may see -->
+
+/home/twinturbo/Desktop/checkedc-parson/parson.wasm.c:804:56: warning: unused parameter 'sandbox' [-Wunused-parameter]
+_TLIB unsigned int process_string_trampoline (unsigned sandbox, unsigned int arg_1,
+                                                       ^
+/home/twinturbo/Desktop/checkedc-parson/parson.wasm.c:815:14: error: conflicting types for 'process_string_trampoline'
+unsigned int process_string_trampoline (unsigned int arg_1,
+
+Reason --> trampoline functions are inserted once per usage 
+
+Solution: remove duplicate 
+
+2.) Very important Point -->
+ 
+ WHen inside a _Tainted scope, you have the freedom to allocate tainted memory to Generic C pointers and freely cast these pointers to tainted type. 
+ 
+ THe problem is, these Generic C pointers (if pointing to Tainted TStructs) are not instrumented to Tainted Decoy Tstructs as they basically are not tainted pointers (requirement 
+ for decoy instrumentation). 
+
+Hence, When you try to compile. there will be a type-mismatch crash when assigning these generic-C pointers freely to Tainted Pointers. 
+
+Now, this kind of a nasty scenario will not occur once you politely execute Tainted functions in WASM Sandbox. 
+However, As a first step, user would want not want a crash. 
+
+VVIP --> NEVER EVER USE t_malloc<THIS WAY>... ALWAYS USE IT THIS WAY --> t_malloc 
+
