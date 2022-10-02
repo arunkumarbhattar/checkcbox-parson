@@ -56,6 +56,7 @@ extern u32 Z_wasi_snapshot_preview1Z_fd_seekZ_iijii(void*, u32, u64, u32, u32);
 extern u32 Z_wasi_snapshot_preview1Z_fd_closeZ_ii(void*, u32);
 
 FUNC_EXPORT u32 w2c_parson_string_tainted_malloc(wasm2c_sandbox_t* const, u32);
+FUNC_EXPORT u32 w2c_simpleRetDouble(wasm2c_sandbox_t* const);
 FUNC_EXPORT u32 w2c_tainted_parson_strndup(wasm2c_sandbox_t* const, u32, u32);
 FUNC_EXPORT u32 w2c_tainted_parson_strdup(wasm2c_sandbox_t* const, u32);
 FUNC_EXPORT u32 w2c_verify_utf8_sequence(wasm2c_sandbox_t* const, u32, u32);

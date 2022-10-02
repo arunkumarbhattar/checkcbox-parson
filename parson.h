@@ -85,8 +85,8 @@ static _TPtr<TJSON_Value>       parse_boolean_value(_TNt_array_ptr<const char> s
 _Tainted _TNt_array_ptr<char> string_tainted_malloc(size_t sz) : count(sz);
 /* Call only once, before calling any other function from parson API. If not called, malloc and free
    from stdlib will be used for all allocations */
-_Itype_for_any(T) void json_set_allocation_functions(_TPtr<_TArray_ptr<T>(size_t s) : byte_count(s)> malloc,
-    _TPtr<void (_TArray_ptr<T>: byte_count(0))> free);
+_Itype_for_any(T)  void json_set_allocation_functions(_TPtr<_TPtr<T>(size_t s)>malloc_fun,
+                                   _TPtr< void (_TPtr<T>)> free_fun);
 /* Sets if slashes should be escaped or not when serializing JSON. By default slashes are escaped.
  This function sets a global setting and is not thread safe. */
 void json_set_escape_slashes(int escape_slashes);

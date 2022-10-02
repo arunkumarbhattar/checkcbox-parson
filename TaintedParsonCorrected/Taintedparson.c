@@ -43,7 +43,7 @@
 
 typedef  struct json_value_value_t_t {
 char * string;
-int       number;
+double       number;
 TJSON_Object * object;
 TJSON_Array * array;
 int          boolean;
@@ -123,7 +123,25 @@ char * (*process_string)(const char * input,size_t len));
 
  int            json_serialize_string(const char * string, char * buf , char * buf_start , size_t buf_len);
 
-static int   append_indent(char * buf ,
+typedef struct NastyStruct{
+int* ptr1;
+char* name;
+float a;
+double b;
+}NS;
+
+NS* simpleRetDouble(void)
+{
+	NS* pNS = (NS*)malloc(sizeof(NS));
+	pNS->ptr1 = (int*)malloc(sizeof(int));
+	*(pNS->ptr1) = 100;
+	pNS->name = (char*)malloc(10*sizeof(char));
+	strcpy(pNS->name, "arun");
+	pNS->a=12.6664287277627762f;
+        pNS->b=12.6664287277627762;
+	return pNS;
+}
+ static int   append_indent(char * buf ,
 int level, char * buf_start , size_t buf_len);
 
 static int   append_string(char * buf ,

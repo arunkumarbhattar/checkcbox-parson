@@ -87,17 +87,13 @@
  * Return Type Templatized function for memory allocation
  */
 _Itype_for_any(T)
-
-    _TPtr<_TArray_ptr<T>(size_t s)
-
-          : byte_count(s)> parson_tainted_malloc;
+    _TPtr<_TPtr<T>(size_t s)> parson_tainted_malloc;
 
 /*
  * Return Type Templatized function for memory free
  */
 _Itype_for_any(T)
-_TPtr< void (_TArray_ptr<T>
-: byte_count(0))>
+_TPtr< void (_TPtr<T>)>
 parson_tainted_free;
 
 #define parson_malloc(t, sz) (malloc<t>(sz))
@@ -151,6 +147,8 @@ _Tainted int parson_escape_slashes = 1;
  * Decoy Template structure. 3.) Decoy Sibling structures must have its pointer
  * type members defined as unsigned int. 4.) Decoy Sibling structures must have
  * its structure type members named as Spl_<Original Template Structure Name>.
+ * 5.) Decoy structure members of type double/float must be defined as the same
+ * way (no change)
  */
 
 /*
@@ -158,7 +156,7 @@ _Tainted int parson_escape_slashes = 1;
  */
 typedef _Decoy _Tainted Tstruct Spl_json_value_value_t_t {
   unsigned int string;
-  int number;
+  double number;
   unsigned int object;
   unsigned int array;
   int boolean;
@@ -216,7 +214,7 @@ Dummy_Spl_json_array_t_t(void);
 /* Type definitions */
 typedef _Tainted Tstruct json_value_value_t_t {
   _TNt_array_ptr<char> string;
-  int number;
+  double number;
   _TPtr<TJSON_Object> object;
   _TPtr<TJSON_Array> array;
   int boolean;
@@ -2811,15 +2809,8 @@ int json_boolean(_TPtr<const TJSON_Value> value) {
   return json_value_get_boolean(value);
 }
 
-_Itype_for_any(T)
-
-void json_set_allocation_functions(_TPtr< _TArray_ptr<T>(size_t s)
-
-:
-byte_count(s)
-> malloc_fun,
-_TPtr< void (_TArray_ptr<T>
-: byte_count(0))> free_fun) _Checked {
+_Itype_for_any(T) void json_set_allocation_functions(_TPtr<_TPtr<T>(size_t s)> malloc_fun,
+_TPtr< void (_TPtr<T>)> free_fun) _Checked {
   if (malloc_fun || free_fun) {
 #undef parson_tainted_malloc
 #undef parson_tainted_free
