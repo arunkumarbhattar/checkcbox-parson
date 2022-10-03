@@ -1,4 +1,4 @@
-#include "/home/twinturbo/Desktop/checkedc-parson/tainted/WASM2Cparson.h"
+#include "./tainted/WASM2Cparson.h"
 #include <checkcbox_extensions.h>
 /*
  Checked C Parson
@@ -106,15 +106,23 @@ parson_tainted_free;
 /*
  * CheckMate Inserted Instrumentation to call WASM sandboxed definition
  */
-_Tainted _TNt_array_ptr<char> parson_string_tainted_malloc(size_t sz)
-    : count(sz) _Unchecked {
-  return (_TNt_array_ptr<char>)(
-
-      w2c_parson_string_tainted_malloc(c_fetch_sandbox_address(), sz
-
-                                       ));
+_Tainted _TNt_array_ptr<char> parson_string_tainted_malloc(size_t sz) : count(sz) _Unchecked{
+    if(sz >= SIZE_MAX)
+        return NULL;
+    _TArray_ptr<char> p : count(sz+1) = (_TArray_ptr<char>)t_malloc<char>(sz + 1);
+    if (p != NULL)
+        p[sz] = 0;
+    return _Tainted_Assume_bounds_cast<_TNt_array_ptr<char>>(p, count(sz));
 }
 
+//_Tainted _TNt_array_ptr<char> parson_string_tainted_malloc(size_t sz)
+//: count(sz) _Unchecked {
+//return (_TNt_array_ptr<char>)(
+//
+//w2c_parson_string_tainted_malloc(c_fetch_sandbox_address(), sz
+//
+//));
+//}
 static _Nt_array_ptr<char> parson_string_malloc(size_t sz)
 
     : count(sz) _Unchecked {
@@ -391,12 +399,57 @@ _Mirror static int num_bytes_in_utf8_sequence(unsigned char c) {
 
 /*
  * Utility Function, no real harm seen here
+ * Since we are not specifying bounds for string, every string access throws us a out of bounds error.
+ * Original Checked-C code deals with this by --> const unsigned char* string = (const unsigned char*)s; -->Which is anyway
+ * an unchecked operation.
+ * To take out all the checkedc bounds errors, we are making this function _Tainted
+ *
+ * _Tainted is like a big brother to _Unchecked. It is a way to tell the compiler that we know what we are doing.
  */
-_Tainted int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> s,
-                                  _TPtr<int> len) {
+_Tainted
+int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> string, _TPtr<int> len){
+    unsigned int cp = 0;
+    *len = num_bytes_in_utf8_sequence(string[0]);
+    // TODO: Requires bounds widening, so left unchecked.
+    _Unchecked {
+//        _TNt_array_ptr<const unsigned char> string = s;
+        if (*len == 1) {
+            cp = string[0];
+        } else if (*len == 2 && IS_CONT(string[1])) {
+            cp = string[0] & 0x1F;
+            cp = (cp << 6) | (string[1] & 0x3F);
+        } else if (*len == 3 && IS_CONT(string[1]) && IS_CONT(string[2])) {
+            cp = ((unsigned char)string[0]) & 0xF;
+            cp = (cp << 6) | (string[1] & 0x3F);
+            cp = (cp << 6) | (string[2] & 0x3F);
+        } else if (*len == 4 && IS_CONT(string[1]) && IS_CONT(string[2]) && IS_CONT(string[3])) {
+            cp = string[0] & 0x7;
+            cp = (cp << 6) | (string[1] & 0x3F);
+            cp = (cp << 6) | (string[2] & 0x3F);
+            cp = (cp << 6) | (string[3] & 0x3F);
+        } else {
+            return 0;
+        }
+    }
 
-  return (int)w2c_verify_utf8_sequence(c_fetch_sandbox_address(), (int)s,
-                                       (int)len);
+    //    /* overlong encodings */
+    if ((cp < 0x80    && *len > 1) ||
+        (cp < 0x800   && *len > 2) ||
+        (cp < 0x10000 && *len > 3)) {
+        return 0;
+    }
+
+//    /* invalid unicode */
+    if (cp > 0x10FFFF) {
+        return 0;
+    }
+
+//    /* surrogate halves */
+    if (cp >= 0xD800 && cp <= 0xDFFF) {
+        return 0;
+    }
+
+    return 1;
 }
 
 /*
@@ -413,28 +466,50 @@ static int is_valid_utf8(_TNt_array_ptr<const char> string
       _Tainted_Dynamic_bounds_cast<_TNt_array_ptr<const char>>(
           string + string_len, count(0));
   while (string < string_end)
-    _Unchecked {
+    {
+      _Unchecked{
       if (!verify_utf8_sequence(
               (_Tainted_Dynamic_bounds_cast<
                   _TNt_array_ptr<const unsigned char>>(string, count(0))),
-              len)) {
+              len))  {
         t_free(len);
         return 0;
       }
       string += *len;
+             }
     }
   t_free(len);
   return 1;
 }
 
-_Tainted int is_decimal(_TNt_array_ptr<const char> string
-
-                        : count(length), size_t length) {
-
-  return (int) w2c_is_decimal(c_fetch_sandbox_address(),
-                     (int)string, length);
+/*
+ * Marked as _Tainted because --> Called from _Tainted function (which had to be marked _Tainted to silence bounds errors)
+ */
+_Tainted int is_decimal(_TNt_array_ptr<const char> string : count(length), size_t length) _Unchecked{
+    if (length > 1 && string[0] == '0' && string[1] != '.') {
+        return 0;
+    }
+    // The following dynamic bounds cast should not be needed; length > 2 > 0
+    _TNt_array_ptr<const char> str1 = parson_string_tainted_malloc(2*sizeof(char));
+    t_strcpy(str1, "-0");
+    _TNt_array_ptr<const char> str2 = parson_string_tainted_malloc(2*sizeof(char));
+    t_strcpy(str2, ".");
+    if (length > 2 && !t_strncmp(_Tainted_Dynamic_bounds_cast<_TNt_array_ptr<const char>>(string, count(0)), str1, 2) && string[2] != str2) {
+        t_free(str1);
+        t_free(str2);
+        return 0;
+    }
+    while (length--) {
+    if (t_strchr("xX", string[length])) {
+        t_free(str1);
+        t_free(str2);
+        return 0;
+        }
+    }
+    t_free(str1);
+    t_free(str2);
+    return 1;
 }
-
 static _Nt_array_ptr<char> read_file(_Nt_array_ptr<const char> filename)
 
   _Unchecked {
@@ -567,17 +642,50 @@ static JSON_Status json_object_add(_TPtr<TJSON_Object> object,
   return json_object_addn(object, name_with_len, nameLen, value);
 }
 
+/*
+ * No Real Harm seen here
+ */
+//_Tainted JSON_Status json_object_addn(_TPtr<TJSON_Object> object,
+//_TNt_array_ptr<const char> name
+//: count(name_len), size_t name_len,
+//_TPtr<TJSON_Value> value) {
+//
+//return (JSON_Status)
+//w2c_json_object_addn(c_fetch_sandbox_address(),
+//(int)object, (int)name, name_len, (int)value);
+//}
+
 _Tainted JSON_Status json_object_addn(_TPtr<TJSON_Object> object,
-                                      _TNt_array_ptr<const char> name
-                                      : count(name_len), size_t name_len,
-                                        _TPtr<TJSON_Value> value) {
-
-  return (JSON_Status)
-      w2c_json_object_addn(c_fetch_sandbox_address(),
-                           (int)object, (int)name, name_len, (int)value);
+    _TNt_array_ptr<const char> name : count(name_len),
+        size_t name_len,
+    _TPtr<TJSON_Value> value) {
+    size_t index = 0;
+    if (object == NULL || name == NULL || value == NULL) {
+    return JSONFailure;
+    }
+    if (json_object_getn_value(object, name, name_len) != NULL) {
+        return JSONFailure;
+    }
+    if (object->count >= object->capacity) {
+        size_t new_capacity = MAX(object->capacity * 2, STARTING_CAPACITY);
+        if (json_object_resize(object, new_capacity) == JSONFailure) {
+        return JSONFailure;
+        }
+    }
+    index = object->count;
+    object->names[index] = tainted_parson_strndup(name, name_len);
+    if (object->names[index] == NULL) {
+        return JSONFailure;
+    }
+    value->parent = json_object_get_wrapping_value(object);
+    object->values[index] = value;
+    object->count++;
+    return JSONSuccess;
 }
-
-
+//
+/*
+ * _Unchecked region with memcpy happening
+ */
 _Tainted JSON_Status json_object_resize(_TPtr<TJSON_Object> object,
                                         size_t new_capacity) {
 
@@ -722,7 +830,9 @@ _Mirror _Checked
 }
 
 /* JSON Value */
-
+/*
+ * No Unchecked operation, hence no need to be tainted
+ */
 _Tainted _TPtr<TJSON_Value>
 json_value_init_string_no_copy(_TNt_array_ptr<char> string) {
   return (_TPtr<TJSON_Value>)(
@@ -762,9 +872,7 @@ _Mirror static
 
 // TODO: Needs_Checked  bounds-widening to be checkable
 /*
- * Need to Taint This
- * Lets Taint This
- *
+ * _Unchecked Operations
  */
 _Tainted int _Unchecked parse_utf16(_TNt_array_ptr<const char> unprocessed,
                                     _TNt_array_ptr<char> processed) {
@@ -779,6 +887,7 @@ Example: "\u006Corem ipsum" -> lorem ipsum */
  * No Unchecked operation, hence no need to be tainted
  * Shall be exposed as a callback
  */
+
 _Callback static _TNt_array_ptr<char>
 process_string(_TNt_array_ptr<const char> input
                : count(len), size_t len) {
@@ -1155,6 +1264,12 @@ _TPtr<TJSON_Value> parse_boolean_value(_TNt_array_ptr<const char> string) _Unche
 
 /*
  * No unsafe  operation, hence no need to be sandboxed
+ * This had to be marked _Tainted as it was performing various casts /passing around args where proving bounds was
+ * not becoming possible.
+ *
+ * Even passing such operations into _Unchecked regions was becoming futile.
+ * Hence, it has been decided to mark these functions _Tainted.. No harm in doing that --> just silences the errors --> If you know what you are doing.
+ * All the functions this function calls also has to be marked _Tainted (_Tainted Flow)
  */
 _Tainted _TPtr<TJSON_Value> parse_number_value(_TNt_array_ptr<const char> string)
     _Unchecked{
@@ -1167,7 +1282,9 @@ _Tainted _TPtr<TJSON_Value> parse_number_value(_TNt_array_ptr<const char> string
       (_TArray_ptr<_TPtr<char>>)t_malloc<_TPtr<char>>(sizeof(_TPtr<char>));
   *end = NULL;
   double number = 0;
-  number = t_strtod(str_cpy, end);
+  _Unchecked {
+     number = t_strtod(_Tainted_Assume_bounds_cast<_TNt_array_ptr<const char>>(str_cpy, count(str_len)), (_TPtr<_TPtr<char>>)end);  //--> Not helping to silence argument prove error 1st param
+  }
 
   size_t string_sz = t_strlen(string);
   size_t end_sz = t_strlen((_TNt_array_ptr<const char>)*end);
@@ -2257,7 +2374,7 @@ JSON_Status json_serialize_to_file_pretty(_TPtr<const TJSON_Value> value,
 }
 
 /*
- * No Uncheckedness
+ * No Uncheckedness here -->
  */
 _Tainted _TNt_array_ptr<char>
 json_serialize_to_string_pretty(_TPtr<const TJSON_Value> value) {
@@ -2269,6 +2386,24 @@ json_serialize_to_string_pretty(_TPtr<const TJSON_Value> value) {
                                           (int)value));
 }
 
+//_TNt_array_ptr<char> json_serialize_to_string_pretty(_TPtr<const TJSON_Value> value) {
+//    JSON_Status serialization_result = JSONFailure;
+//    size_t buf_size_bytes = json_serialization_size_pretty(value);
+//    _TNt_array_ptr<char> buf : byte_count(buf_size_bytes) = NULL;
+//    if (buf_size_bytes == 0) {
+//        return NULL;
+//    }
+//    buf = parson_string_tainted_malloc(buf_size_bytes);
+//    if (buf == NULL) {
+//        return NULL;
+//    }
+//    serialization_result = json_serialize_to_buffer_pretty(value, buf, buf_size_bytes);
+//    if (serialization_result == JSONFailure) {
+//        json_free_serialized_string(_Tainted_Dynamic_bounds_cast<_TNt_array_ptr<char>>(buf, count(0)));
+//        return NULL;
+//    }
+//    return buf;
+//}
 /*
  * No Uncheckedness
  */
@@ -2277,7 +2412,7 @@ _Mirror void json_free_serialized_string(_TNt_array_ptr<const char> string)
   parson_tainted_free(char, string);
 }
 /*
- * TODO: No Real Harm Here
+ * Moved to Tainted Region because there is _Unchecked memmove here
  */
 _Tainted JSON_Status json_array_remove(_TPtr<TJSON_Array> array, size_t ix) {
 
@@ -2636,15 +2771,21 @@ JSON_Status json_object_dotremove(_TPtr<TJSON_Object> object,
   return json_object_dotremove_internal(object, name, 1);
 }
 /*
- * No UncheckedNess
+ * No UncheckedNess. -->
  */
-_Tainted JSON_Status json_object_clear(_TPtr<TJSON_Object> object) {
-
-  return (JSON_Status)
-
-      w2c_json_object_clear(c_fetch_sandbox_address(),
-
-                            (int)object);
+_Unchecked JSON_Status json_object_clear(_TPtr<TJSON_Object> object) {
+    size_t i = 0;
+    if (object == NULL) {
+        return JSONFailure;
+    }
+    for (i = 0; i < json_object_get_count(object); i++) {
+        _Unchecked {
+            t_free(object->names[i]);
+        };
+        json_value_free(object->values[i]);
+    }
+    object->count = 0;
+    return JSONSuccess;
 }
 
 /*
