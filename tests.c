@@ -307,6 +307,7 @@ void test_suite_2_no_comments(void) {
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string(root_value))));
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string_pretty(root_value))));
     json_value_free(root_value);
+    t_free(filename);
 }
 
 void test_suite_2_with_comments(void) {
@@ -320,7 +321,6 @@ void test_suite_2_with_comments(void) {
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string_pretty(root_value))));
     json_value_free(root_value);
     t_free(filename);
-    json_value_free(root_value);
 }
 
 void test_suite_3(void) {

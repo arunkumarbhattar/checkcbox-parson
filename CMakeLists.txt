@@ -12,8 +12,15 @@ endif()
 add_executable(final "${CMAKE_SOURCE_DIR}/tests.c"
         "${CMAKE_SOURCE_DIR}/parson.wasm.c"
         )
+
+#add_executable(final "${CMAKE_SOURCE_DIR}/tests.c"
+#        "${CMAKE_SOURCE_DIR}/parson.tainted.c"
+#        )
+
 target_include_directories(final PUBLIC "${CMAKE_SOURCE_DIR}/parson.h"
         )
+#target_include_directories(final PUBLIC "${CMAKE_SOURCE_DIR}/parson_tainted.h"
+#        )
 target_link_libraries(final "${CMAKE_SOURCE_DIR}/static_libraries/tainted.a"
         "${CMAKE_SOURCE_DIR}/static_libraries/libSBX_CON_LIB.a"
         "${CMAKE_SOURCE_DIR}/static_libraries/libisc_lib_final.a"
