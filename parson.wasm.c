@@ -115,14 +115,6 @@ _Tainted _TNt_array_ptr<char> parson_string_tainted_malloc(size_t sz) : count(sz
     return _Tainted_Assume_bounds_cast<_TNt_array_ptr<char>>(p, count(sz));
 }
 
-//_Tainted _TNt_array_ptr<char> parson_string_tainted_malloc(size_t sz)
-//: count(sz) _Unchecked {
-//return (_TNt_array_ptr<char>)(
-//
-//w2c_parson_string_tainted_malloc(c_fetch_sandbox_address(), sz
-//
-//));
-//}
 static _Nt_array_ptr<char> parson_string_malloc(size_t sz)
 
     : count(sz) _Unchecked {
@@ -407,11 +399,12 @@ _Mirror static int num_bytes_in_utf8_sequence(unsigned char c) {
  * _Tainted is like a big brother to _Unchecked. It is a way to tell the compiler that we know what we are doing.
  */
 _Tainted
-int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> string, _TPtr<int> len){
+int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> string, _TPtr<int> len) {
     unsigned int cp = 0;
     *len = num_bytes_in_utf8_sequence(string[0]);
     // TODO: Requires bounds widening, so left unchecked.
-    _Unchecked {
+    _Unchecked
+    {
 //        _TNt_array_ptr<const unsigned char> string = s;
         if (*len == 1) {
             cp = string[0];
@@ -419,7 +412,7 @@ int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> string, _TPtr<int> 
             cp = string[0] & 0x1F;
             cp = (cp << 6) | (string[1] & 0x3F);
         } else if (*len == 3 && IS_CONT(string[1]) && IS_CONT(string[2])) {
-            cp = ((unsigned char)string[0]) & 0xF;
+            cp = ((unsigned char) string[0]) & 0xF;
             cp = (cp << 6) | (string[1] & 0x3F);
             cp = (cp << 6) | (string[2] & 0x3F);
         } else if (*len == 4 && IS_CONT(string[1]) && IS_CONT(string[2]) && IS_CONT(string[3])) {
@@ -433,8 +426,8 @@ int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> string, _TPtr<int> 
     }
 
     //    /* overlong encodings */
-    if ((cp < 0x80    && *len > 1) ||
-        (cp < 0x800   && *len > 2) ||
+    if ((cp < 0x80 && *len > 1) ||
+        (cp < 0x800 && *len > 2) ||
         (cp < 0x10000 && *len > 3)) {
         return 0;
     }
@@ -448,7 +441,6 @@ int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> string, _TPtr<int> 
     if (cp >= 0xD800 && cp <= 0xDFFF) {
         return 0;
     }
-
     return 1;
 }
 
@@ -486,29 +478,9 @@ static int is_valid_utf8(_TNt_array_ptr<const char> string
  * Marked as _Tainted because --> Called from _Tainted function (which had to be marked _Tainted to silence bounds errors)
  */
 _Tainted int is_decimal(_TNt_array_ptr<const char> string : count(length), size_t length) _Unchecked{
-    if (length > 1 && string[0] == '0' && string[1] != '.') {
-        return 0;
-    }
-    // The following dynamic bounds cast should not be needed; length > 2 > 0
-    _TNt_array_ptr<const char> str1 = parson_string_tainted_malloc(2*sizeof(char));
-    t_strcpy(str1, "-0");
-    _TNt_array_ptr<const char> str2 = parson_string_tainted_malloc(2*sizeof(char));
-    t_strcpy(str2, ".");
-    if (length > 2 && !t_strncmp(_Tainted_Dynamic_bounds_cast<_TNt_array_ptr<const char>>(string, count(0)), str1, 2) && string[2] != str2) {
-        t_free(str1);
-        t_free(str2);
-        return 0;
-    }
-    while (length--) {
-    if (t_strchr("xX", string[length])) {
-        t_free(str1);
-        t_free(str2);
-        return 0;
-        }
-    }
-    t_free(str1);
-    t_free(str2);
-    return 1;
+
+return (int) w2c_is_decimal(c_fetch_sandbox_address(),
+(int)string, length);
 }
 static _Nt_array_ptr<char> read_file(_Nt_array_ptr<const char> filename)
 
@@ -645,17 +617,7 @@ static JSON_Status json_object_add(_TPtr<TJSON_Object> object,
 /*
  * No Real Harm seen here
  */
-//_Tainted JSON_Status json_object_addn(_TPtr<TJSON_Object> object,
-//_TNt_array_ptr<const char> name
-//: count(name_len), size_t name_len,
-//_TPtr<TJSON_Value> value) {
-//
-//return (JSON_Status)
-//w2c_json_object_addn(c_fetch_sandbox_address(),
-//(int)object, (int)name, name_len, (int)value);
-//}
-
-_Tainted JSON_Status json_object_addn(_TPtr<TJSON_Object> object,
+JSON_Status json_object_addn(_TPtr<TJSON_Object> object,
     _TNt_array_ptr<const char> name : count(name_len),
         size_t name_len,
     _TPtr<TJSON_Value> value) {
@@ -2774,20 +2736,19 @@ JSON_Status json_object_dotremove(_TPtr<TJSON_Object> object,
  * No UncheckedNess. -->
  */
 _Unchecked JSON_Status json_object_clear(_TPtr<TJSON_Object> object) {
-    size_t i = 0;
-    if (object == NULL) {
-        return JSONFailure;
-    }
-    for (i = 0; i < json_object_get_count(object); i++) {
-        _Unchecked {
-            t_free(object->names[i]);
-        };
-        json_value_free(object->values[i]);
-    }
-    object->count = 0;
-    return JSONSuccess;
+size_t i = 0;
+if (object == NULL) {
+return JSONFailure;
 }
-
+for (i = 0; i < json_object_get_count(object); i++) {
+_Unchecked {
+t_free(object->names[i]);
+};
+json_value_free(object->values[i]);
+}
+object->count = 0;
+return JSONSuccess;
+}
 /*
  * No UncheckedNess
  */

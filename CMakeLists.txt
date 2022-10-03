@@ -1,16 +1,11 @@
 cmake_minimum_required(VERSION 3.13)
-set(CMAKE_C_COMPILER /home/twinturbo/Desktop/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang)
+
 project(checkedc-parson
         VERSION 0.1
         DESCRIPTION "An example application that simulates a typical image parsing program")
 
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ldl -lpthread")
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+set(CMAKE_C_COMPILER /home/twinturbo/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang)
+if (CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     add_compile_options( -fPIE -Wall -Wextra)
     add_link_options(-ldl -lstdc++)
 endif()

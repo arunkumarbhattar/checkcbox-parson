@@ -164,7 +164,7 @@ _Tainted int is_decimal(_TNt_array_ptr<const char> string : count(length), size_
 /* JSON Object */
 _Tainted _TPtr<TJSON_Object> json_object_init(_TPtr<TJSON_Value> wrapping_value);
 static JSON_Status       json_object_add(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name, _TPtr<TJSON_Value> value);
-_Tainted JSON_Status       json_object_addn(_TPtr<TJSON_Object> object,
+JSON_Status       json_object_addn(_TPtr<TJSON_Object> object,
 _TNt_array_ptr<const char> name : count(name_len),
         size_t name_len,
 _TPtr<TJSON_Value> value);
@@ -240,7 +240,7 @@ JSON_Status json_object_remove(_TPtr<TJSON_Object> object, _TNt_array_ptr<const 
 JSON_Status json_object_dotremove(_TPtr<TJSON_Object> object, _TNt_array_ptr<const char> name) ;
 
 /* Removes all name-value pairs in object */
-_Unchecked JSON_Status json_object_clear(_TPtr<TJSON_Object> object);
+_Unchecked JSON_Status json_object_clear(_TPtr<TJSON_Object> object) ;
 
 /*
  *JSON Array
