@@ -153,9 +153,9 @@ _Mirror _TPtr<TJSON_Value> json_object_get_wrapping_value(_TPtr<const TJSON_Obje
 
 /* Various */
 static _Nt_array_ptr<char> read_file(_Nt_array_ptr<const char> filename) ;
-_Mirror static void remove_comments(_Nt_array_ptr<char> string, _Nt_array_ptr<const char> start_token, _Nt_array_ptr<const char> end_token);
+_Mirror static void remove_comments(_TPtr<char> string, _Nt_array_ptr<const char> start_token, _Nt_array_ptr<const char> end_token);
 _Mirror static int                 hex_char_to_int(char c);
-static int _Unchecked      parse_utf16_hex(const char* string, unsigned int* result);
+static int _Unchecked      parse_utf16_hex(_TPtr<const char> string, unsigned int* result);
 static int                 num_bytes_in_utf8_sequence(unsigned char c);
 _Tainted int verify_utf8_sequence(_TNt_array_ptr<const unsigned char> string , _TPtr<int> len);// len is set after, not a constraint on string
 static int is_valid_utf8(_TNt_array_ptr<const char> string : bounds(string, string + string_len), size_t string_len);

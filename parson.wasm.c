@@ -47,7 +47,7 @@
 #pragma CHECKED_SCOPE push
 #pragma CHECKED_SCOPE on
 
-#include "parson.h"
+#include "parson.tainted.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -354,8 +354,7 @@ _Mirror static int hex_char_to_int(char c)
  */
 // TODO: This function requires bounds widening logic, so is unchecked.
 _Mirror static int _Unchecked
-
-parse_utf16_hex(const char *s, unsigned int *result) {
+parse_utf16_hex(_TPtr<const char> s, unsigned int *result) {
   int x1, x2, x3, x4;
   if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0' || s[3] == '\0') {
     return 0;
@@ -553,50 +552,47 @@ JSON_Status json_serialize_to_file(_TPtr<const TJSON_Value> value,
   return return_code;
 }
 
-_Mirror static void remove_comments(_Nt_array_ptr<char> string,
-                                    _Nt_array_ptr<const char> start_token,
-                                    _Nt_array_ptr<const char> end_token)
-    _Checked {
-  int in_string = 0, escaped = 0;
-  size_t i;
-  char current_char;
-  size_t start_token_len = strlen(start_token);
-  size_t end_token_len = strlen(end_token);
-  if (start_token_len == 0 || end_token_len == 0) {
-    return;
-  }
-  while ((current_char = *string) != '\0') {
+_Mirror static void remove_comments(_TPtr<char> string, _Nt_array_ptr<const char> start_token, _Nt_array_ptr<const char> end_token) _Checked {
+    int in_string = 0, escaped = 0;
+    size_t i;
+    char current_char;
+    size_t start_token_len = strlen(start_token);
+    size_t end_token_len = strlen(end_token);
+    if (start_token_len == 0 || end_token_len == 0) {
+        return;
+    }
+    while ((current_char = *string) != '\0') {
     if (current_char == '\\' && !escaped) {
-      escaped = 1;
-      string++;
-      continue;
-    } else if (current_char == '\"' && !escaped) {
-      in_string = !in_string;
-      // TODO: Can't prove this
+        escaped = 1;
+        string++;
+        continue;
+    }
+    else if (current_char == '\"' && !escaped) {
+        in_string = !in_string;
+        // TODO: Can't prove this
     } else {
-      _Unchecked {
-        char *unchecked_string = (char *)string;
-        if (!in_string &&
-            strncmp(unchecked_string, start_token, start_token_len) == 0) {
-          for (i = 0; i < start_token_len; i++) {
-            unchecked_string[i] = ' ';
-          }
-          unchecked_string = unchecked_string + start_token_len;
-          char *ptr_ = strstr(unchecked_string, end_token);
-          if (!ptr_) {
-            return;
-          }
-          for (i = 0; i < (ptr_ - unchecked_string) + end_token_len; i++) {
-            unchecked_string[i] = ' ';
-          }
-          string = _Assume_bounds_cast<_Nt_array_ptr<char>>(
-              ptr_ + end_token_len - 1, count(0));
-        }
-      } // end _Unchecked
+    _Unchecked {
+        _TPtr<char>unchecked_string = string;
+    if (!in_string && t_strncmp(unchecked_string, (const char*) start_token, start_token_len) == 0) {
+        for(i = 0; i < start_token_len; i++) {
+        unchecked_string[i] = ' ';
+    }
+    unchecked_string = unchecked_string + start_token_len;
+    _TPtr<char> ptr_ = t_strstr(unchecked_string, (const char*)end_token);
+    if (!ptr_) {
+        return;
+    }
+    for (i = 0; i < (ptr_ - unchecked_string) + end_token_len; i++) {
+        unchecked_string[i] = ' ';
+    }
+
+    string = ptr_ + end_token_len - 1;
+    }
+    } // end _Unchecked
     }
     escaped = 0;
     string++;
-  }
+    }
 }
 
 static JSON_Status json_object_add(_TPtr<TJSON_Object> object,
@@ -668,11 +664,8 @@ json_object_getn_value(_TPtr<const TJSON_Object> object,
     if (name_length != name_len) {
       continue;
     }
-    if (t_strncmp(_Tainted_Assume_bounds_cast<_TNt_array_ptr<const char>>(
-                      object->names[i],
-                      byte_count(object->capacity)),
-                  _Tainted_Assume_bounds_cast<_TNt_array_ptr<const char>>(
-                      name, count(name_len)),
+    if (t_strncmp(object->names[i],
+                      name,
                   name_len) == 0) {
       return (_Tainted_Assume_bounds_cast<_TPtr<TJSON_Value>>(
           object->values[i], byte_count(object->capacity)));
@@ -1121,7 +1114,6 @@ static _TPtr<TJSON_Value> parse_object_value(_TNt_array_ptr<const char> string,
  * tainted pointers
  *
  */
-
 static _TPtr<TJSON_Value> parse_array_value(_TNt_array_ptr<const char> string,
                                             size_t nesting) {
   /*
@@ -1186,7 +1178,6 @@ static _TPtr<TJSON_Value> parse_array_value(_TNt_array_ptr<const char> string,
   // t_free<const char>(str_cpy);
   return output_value;
 }
-
 _Tainted _TPtr<TJSON_Value>
 parse_string_value(_TNt_array_ptr<const char> string,
                    _TPtr<_TNt_array_ptr<char>(_TNt_array_ptr<const char> input
@@ -1758,7 +1749,7 @@ int json_object_get_boolean(_TPtr<const TJSON_Object> object,
 _Mirror _TPtr<TJSON_Value>
 json_object_dotget_value(_TPtr<const TJSON_Object> object,
                          _TNt_array_ptr<const char> name) {
-  _TNt_array_ptr<const char> dot_position = t_strchr(name, '.');
+  _TPtr<const char> dot_position = t_strchr(name, '.');
   if (!dot_position)
     _Checked { return json_object_get_value(object, name); }
   _TNt_array_ptr<const char> after_dot :
@@ -2610,7 +2601,7 @@ JSON_Status json_object_set_null(_TPtr<TJSON_Object> object,
 JSON_Status json_object_dotset_value(_TPtr<TJSON_Object> object,
                                      _TNt_array_ptr<const char> name,
                                      _TPtr<TJSON_Value> value) {
-  _TNt_array_ptr<const char> dot_pos = NULL;
+  _TPtr<const char> dot_pos = NULL;
   _TPtr<TJSON_Value> temp_value = NULL;
   _TPtr<TJSON_Value> new_value = NULL;
   _TPtr<TJSON_Object> temp_object = NULL;
