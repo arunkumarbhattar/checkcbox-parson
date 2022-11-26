@@ -65,8 +65,8 @@
 #define NUM_BUF_SIZE 64 /* double printed with "%1.17g" shouldn't be longer than 25 bytes so let's be paranoid and use 64 */
 
 #define SIZEOF_TOKEN(a)       (sizeof(a) - 1)
-#define SKIP_CHAR(str)        ((str)++)
-#define SKIP_WHITESPACES(str) while (isspace((unsigned char)(*str))) { SKIP_CHAR(str); }
+#define SKIP_CHAR(str)        ((*str)++)
+#define SKIP_WHITESPACES(str) while (isspace((unsigned char)(**str))) { SKIP_CHAR(str); }
 #define MAX(a, b)             ((a) > (b) ? (a) : (b))
 
 #undef malloc
@@ -335,9 +335,9 @@ static _Nt_array_ptr<char> read_file(_Nt_array_ptr<const char> filename) _Unchec
 
     return NULL;
     }
-fclose((FILE *)fp);
-file_contents[size_read] = '\0';
-return file_contents;
+    fclose((FILE *)fp);
+    file_contents[size_read] = '\0';
+    return file_contents;
 }
 
 /*
@@ -653,28 +653,23 @@ return new_value;
 /*
  * No Unchecked operation, hence no need to be tainted
  */
-static _Checked JSON_Status skip_quotes(_TPtr<const char> string) _Checked {
-    int str_len = t_strlen(string);
-    _TPtr<const char> str_cpy = (_TPtr<const char>)string_tainted_malloc
-            (str_len*sizeof(char));
-    t_strcpy(str_cpy, string);
-    if (*str_cpy != '\"') {
-        return JSONFailure;
+static _Checked JSON_Status skip_quotes(_Ptr<_TPtr<const char>> string) _Checked {
+    if (**string != '\"') {
+    return JSONFailure;
     }
-    SKIP_CHAR(str_cpy);
-    while (*str_cpy != '\"') {
-        if (*str_cpy == '\0') {
-            return JSONFailure;
-        } else if (*str_cpy == '\\') {
-            SKIP_CHAR(str_cpy);
-            if (*str_cpy == '\0') {
-                return JSONFailure;
-            }
-        }
-        SKIP_CHAR(str_cpy);
+    SKIP_CHAR(string);
+    while (**string != '\"') {
+    if (**string == '\0') {
+    return JSONFailure;
+    } else if (**string == '\\') {
+    SKIP_CHAR(string);
+    if (**string == '\0') {
+    return JSONFailure;
     }
-    SKIP_CHAR(str_cpy);
-    t_strcpy(string, str_cpy);
+    }
+    SKIP_CHAR(string);
+    }
+    SKIP_CHAR(string);
     return JSONSuccess;
 }
 
@@ -684,67 +679,58 @@ static _Checked JSON_Status skip_quotes(_TPtr<const char> string) _Checked {
  * Lets Taint This
  *
  */
-int _Unchecked parse_utf16(_TPtr<const char> unprocessed ,
-_TPtr<char> processed) {
-unsigned int cp, lead, trail;
-int parse_succeeded = 0;
-int processed_len = t_strlen(processed);
-int unprocessed_len = t_strlen(unprocessed);
-_TPtr<char> processed_ptr = (_TPtr<char>)t_malloc<char>(processed_len*sizeof(char));
-t_strcpy(processed_ptr, processed);
-_TPtr<char> unprocessed_ptr = (_TPtr<char>)t_malloc<char>(unprocessed_len*sizeof(char));
-t_strcpy(unprocessed_ptr, unprocessed);
-unprocessed_ptr++; /* skips u */
-parse_succeeded = parse_utf16_hex(unprocessed_ptr, (unsigned int *)&cp);
-if (!parse_succeeded) {
-return JSONFailure;
-}
-if (cp < 0x80) {
-processed_ptr[0] = (char)cp; /* 0xxxxxxx */
-} else if (cp < 0x800) {
-processed_ptr[0] = ((cp >> 6) & 0x1F) | 0xC0; /* 110xxxxx */
-processed_ptr[1] = ((cp)      & 0x3F) | 0x80; /* 10xxxxxx */
-processed_ptr += 1;
-} else if (cp < 0xD800 || cp > 0xDFFF) {
-processed_ptr[0] = ((cp >> 12) & 0x0F) | 0xE0; /* 1110xxxx */
-processed_ptr[1] = ((cp >> 6)  & 0x3F) | 0x80; /* 10xxxxxx */
-processed_ptr[2] = ((cp)       & 0x3F) | 0x80; /* 10xxxxxx */
-processed_ptr += 2;
-} else if (cp >= 0xD800 && cp <= 0xDBFF) { /* lead surrogate (0xD800..0xDBFF) */
-lead = cp;
-unprocessed_ptr += 4; /* should always be within the buffer, otherwise previous sscanf would fail */
-if (*unprocessed_ptr++ != '\\' || *unprocessed_ptr++ != 'u') {
-return JSONFailure;
-}
-parse_succeeded = parse_utf16_hex(unprocessed_ptr, (unsigned int *)&trail);
-if (!parse_succeeded || trail < 0xDC00 || trail > 0xDFFF) { /* valid trail surrogate? (0xDC00..0xDFFF) */
-return JSONFailure;
-}
-cp = ((((lead - 0xD800) & 0x3FF) << 10) | ((trail - 0xDC00) & 0x3FF)) + 0x010000;
-processed_ptr[0] = (((cp >> 18) & 0x07) | 0xF0); /* 11110xxx */
-processed_ptr[1] = (((cp >> 12) & 0x3F) | 0x80); /* 10xxxxxx */
-processed_ptr[2] = (((cp >> 6)  & 0x3F) | 0x80); /* 10xxxxxx */
-processed_ptr[3] = (((cp)       & 0x3F) | 0x80); /* 10xxxxxx */
-processed_ptr += 3;
-} else {
-return JSONFailure;
-}
-unprocessed_ptr += 3;
-t_strcpy(processed, processed_ptr);
-t_strcpy(unprocessed, unprocessed_ptr);
-return JSONSuccess;
+int _Unchecked parse_utf16(_TPtr<const char>* unprocessed ,
+_TPtr<char>* processed) {
+    unsigned int cp, lead, trail;
+    int parse_succeeded = 0;
+    _TPtr<char> processed_ptr = *processed;
+    _TPtr<const char> unprocessed_ptr = *unprocessed;
+    unprocessed_ptr++; /* skips u */
+    parse_succeeded = parse_utf16_hex(unprocessed_ptr, &cp);
+    if (!parse_succeeded) {
+        return JSONFailure;
+    }
+    if (cp < 0x80) {
+        processed_ptr[0] = (char)cp; /* 0xxxxxxx */
+    } else if (cp < 0x800) {
+        processed_ptr[0] = ((cp >> 6) & 0x1F) | 0xC0; /* 110xxxxx */
+        processed_ptr[1] = ((cp)      & 0x3F) | 0x80; /* 10xxxxxx */
+        processed_ptr += 1;
+    } else if (cp < 0xD800 || cp > 0xDFFF) {
+        processed_ptr[0] = ((cp >> 12) & 0x0F) | 0xE0; /* 1110xxxx */
+        processed_ptr[1] = ((cp >> 6)  & 0x3F) | 0x80; /* 10xxxxxx */
+        processed_ptr[2] = ((cp)       & 0x3F) | 0x80; /* 10xxxxxx */
+        processed_ptr += 2;
+    } else if (cp >= 0xD800 && cp <= 0xDBFF) { /* lead surrogate (0xD800..0xDBFF) */
+        lead = cp;
+        unprocessed_ptr += 4; /* should always be within the buffer, otherwise previous sscanf would fail */
+        if (*unprocessed_ptr++ != '\\' || *unprocessed_ptr++ != 'u') {
+            return JSONFailure;
+        }
+        parse_succeeded = parse_utf16_hex(unprocessed_ptr, &trail);
+        if (!parse_succeeded || trail < 0xDC00 || trail > 0xDFFF) { /* valid trail surrogate? (0xDC00..0xDFFF) */
+        return JSONFailure;
+        }
+    cp = ((((lead - 0xD800) & 0x3FF) << 10) | ((trail - 0xDC00) & 0x3FF)) + 0x010000;
+    processed_ptr[0] = (((cp >> 18) & 0x07) | 0xF0); /* 11110xxx */
+    processed_ptr[1] = (((cp >> 12) & 0x3F) | 0x80); /* 10xxxxxx */
+    processed_ptr[2] = (((cp >> 6)  & 0x3F) | 0x80); /* 10xxxxxx */
+    processed_ptr[3] = (((cp)       & 0x3F) | 0x80); /* 10xxxxxx */
+    processed_ptr += 3;
+    } else { /* trail surrogate before lead surrogate */
+        return JSONFailure;
+    }
+    unprocessed_ptr += 3;
+    *processed = processed_ptr;
+    *unprocessed = unprocessed_ptr;
+    return JSONSuccess;
 }
 
 
 /* Copies and processes passed string up to supplied length.
 Example: "\u006Corem ipsum" -> lorem ipsum */
-_Callback static _TPtr<char> process_string(_TPtr<const char> input , size_t len) {
-   /*
-    * As We move, input should never change, only input_ptr must change
-    */
-    int str_len = t_strlen(input);
-    _TPtr<const char> input_ptr = string_tainted_malloc(str_len*sizeof(char));
-    t_strcpy(input_ptr, input);
+static _TPtr<char> process_string(_TPtr<const char> input , size_t len) {
+    _TPtr<const char> input_ptr = input;
     size_t initial_size = (len + 1) * sizeof(char);
     size_t final_size = 0;
     _TPtr<char> output  = NULL;
@@ -754,7 +740,7 @@ _Callback static _TPtr<char> process_string(_TPtr<const char> input , size_t len
         goto error;
     }
     output_ptr = output;
-    while ((*input_ptr != '\0') && (size_t)( t_strlen(input) - t_strlen(input_ptr) < len)) {
+    while ((*input_ptr != '\0') && (size_t)( input_ptr - input < len)) {
         if (*input_ptr == '\\') {
             input_ptr++;
             switch (*input_ptr) {
@@ -772,7 +758,7 @@ _Callback static _TPtr<char> process_string(_TPtr<const char> input , size_t len
                         _TPtr<char> output_tmp = output_ptr;
                         _Unchecked{
                         if (parse_utf16(
-                                input_ptr, output_ptr) == JSONFailure) {
+                                &input_tmp, &output_tmp) == JSONFailure) {
                             goto error;
                         }
                         };
@@ -814,21 +800,14 @@ error:
  * process string is exposed as a callback -->
  */
 
-_TPtr<char> get_quoted_string(_TPtr<const char> string,
-_TPtr<_TPtr<char>(_TPtr<const char> input, size_t len)> process_string) {
-    int str_len = t_strlen(string);
-    _TPtr<const char> string_start = string_tainted_malloc(str_len*sizeof(char));
-        t_strcpy(string_start, string);
-
+_TPtr<char> get_quoted_string(_Ptr<_TPtr<const char>> string) {
+    _TPtr<const char> string_start = *string;
     size_t string_len = 0;
-    /*
-    * skip quotes is a mirror function
-    */
     JSON_Status status = skip_quotes(string);
     if (status != JSONSuccess) {
         return NULL;
     }
-    string_len = t_strlen(string_start) - t_strlen(string) - 2; /* length without quotes */
+    string_len = *string - string_start - 2; /* length without quotes */
     // TODO: We can't figure this out dynamically
     _TPtr<const char> one_past_start = NULL;
     _Unchecked {
@@ -840,7 +819,7 @@ _TPtr<_TPtr<char>(_TPtr<const char> input, size_t len)> process_string) {
  * No Unchecked operation, hence no need to be tainted
  * This Shall be made _Callback
  */
-_Callback _TPtr<TJSON_Value> parse_value(_TPtr<const char> string, size_t nesting) {
+_TPtr<TJSON_Value> parse_value(_Ptr<_TPtr<const char>> string, size_t nesting) {
     if (nesting > MAX_NESTING) {
         return NULL;
     }
@@ -849,13 +828,13 @@ _Callback _TPtr<TJSON_Value> parse_value(_TPtr<const char> string, size_t nestin
      * We avoid marshalling here because we know for sure that
      * we are not writing anything into it
      */
-    switch (*string) {
+    switch (**string) {
         case '{':
             return parse_object_value(string, nesting + 1);
         case '[':
             return parse_array_value(string, nesting + 1);
         case '\"':
-            return parse_string_value(string, &process_string);
+            return parse_string_value(string);
         case 'f': case 't':
             return parse_boolean_value(string);
         case '-':
@@ -873,11 +852,7 @@ _Callback _TPtr<TJSON_Value> parse_value(_TPtr<const char> string, size_t nestin
  * However, let it still accepts tainted arguments
  */
 static _TPtr<TJSON_Value>
-        parse_object_value(_TPtr<const char> string, size_t nesting) {
-    int str_len = t_strlen(string);
-    _TPtr<const char> str_cpy = (_TPtr<const char>)string_tainted_malloc
-            (str_len*sizeof(char));
-    t_strcpy(str_cpy, string);
+        parse_object_value(_Ptr<_TPtr<const char>> str_cpy, size_t nesting) {
     _TPtr<TJSON_Value> output_value = NULL;
     _TPtr<TJSON_Value> new_value = NULL;
     _TPtr<TJSON_Object> output_object = NULL;
@@ -888,12 +863,10 @@ static _TPtr<TJSON_Value>
      */
     output_value = json_value_init_object();
     if (output_value == NULL) {
-        t_strcpy(string, str_cpy);
         return NULL;
     }
-    if (*str_cpy != '{') {
+    if (**str_cpy != '{') {
         json_value_free(output_value);
-        t_strcpy(string, str_cpy);
         return NULL;
     }
     /*
@@ -902,23 +875,20 @@ static _TPtr<TJSON_Value>
     output_object = json_value_get_object(output_value);
     SKIP_CHAR(str_cpy);
     SKIP_WHITESPACES(str_cpy);
-    if (*str_cpy == '}') _Checked { /* empty object */
+    if (**str_cpy == '}') _Checked { /* empty object */
         SKIP_CHAR(str_cpy);
-        t_strcpy(string, str_cpy);
         return output_value;
     }
-    while (*str_cpy != '\0') {
-        new_key = get_quoted_string(str_cpy, &process_string);
+    while (**str_cpy != '\0') {
+        new_key = get_quoted_string(str_cpy);
         if (new_key == NULL) {
             json_value_free(output_value);
-            t_strcpy(string, str_cpy);
             return NULL;
         }
         SKIP_WHITESPACES(str_cpy);
-        if (*str_cpy != ':') {
+        if (**str_cpy != ':') {
             parson_tainted_free(char, new_key);
             json_value_free(output_value);
-            t_strcpy(string, str_cpy);
             return NULL;
         }
         SKIP_CHAR(str_cpy);
@@ -926,120 +896,97 @@ static _TPtr<TJSON_Value>
         if (new_value == NULL) {
             parson_tainted_free(char, new_key);
             json_value_free(output_value);
-            t_strcpy(string, str_cpy);
             return NULL;
         }
         if (json_object_add(output_object, new_key, new_value) == JSONFailure) {
             parson_tainted_free(char, new_key);
             json_value_free(new_value);
             json_value_free(output_value);
-            t_strcpy(string, str_cpy);
             return NULL;
         }
         parson_tainted_free(char, new_key);
         SKIP_WHITESPACES(str_cpy);
-        if (*str_cpy != ',') _Checked {
+        if (**str_cpy != ',') _Checked {
             break;
         }
         SKIP_CHAR(str_cpy);
         SKIP_WHITESPACES(str_cpy);
     }
     SKIP_WHITESPACES(str_cpy);
-    if (*str_cpy != '}' || /* Trim object after parsing is over */
+    if (**str_cpy != '}' || /* Trim object after parsing is over */
         json_object_resize(output_object, json_object_get_count(output_object)) == JSONFailure) {
             json_value_free(output_value);
-            t_strcpy(string, str_cpy);
             return NULL;
     }
     SKIP_CHAR(str_cpy);
-    t_strcpy(string, str_cpy);
     return output_value;
 }
 /*
  * No Unchecked operation, hence no need to be tainted, but lets make it access tainted pointers
  *
  */
-static _TPtr<TJSON_Value> parse_array_value(_TPtr<const char> string, size_t nesting) {
-    /*
-     * Need effect based marshalling in here -->
-     */
-    int str_len = t_strlen(string);
-    _TPtr<const char> str_cpy = (_TPtr<const char>)string_tainted_malloc
-            (str_len*sizeof(char));
-    t_strcpy(str_cpy, string);
+static _TPtr<TJSON_Value> parse_array_value(_Ptr<_TPtr<const char>> str_cpy, size_t nesting) {
     _TPtr<TJSON_Value> output_value = NULL;
     _TPtr<TJSON_Value> new_array_value = NULL;
     _TPtr<TJSON_Array> output_array = NULL;
     output_value = json_value_init_array();
     if (output_value == NULL) {
-        t_strcpy(string, str_cpy);
         return NULL;
     }
-    if (*str_cpy != '[') {
+    if (**str_cpy != '[') {
         json_value_free(output_value);
-        t_strcpy(string, str_cpy);
         return NULL;
     }
     output_array = json_value_get_array(output_value);
     SKIP_CHAR(str_cpy);
     SKIP_WHITESPACES(str_cpy);
-    if (*str_cpy == ']') _Checked { /* empty array */
+    if (**str_cpy == ']'){ /* empty array */
         SKIP_CHAR(str_cpy);
-        t_strcpy(string, str_cpy);
         return output_value;
     }
-    while (*str_cpy != '\0') {
+    while (**str_cpy != '\0') {
+        if(**str_cpy == ',')
+        {
+            int i = 10;
+        }
         new_array_value = parse_value(str_cpy, nesting);
         if (new_array_value == NULL) {
             json_value_free(output_value);
-            t_strcpy(string, str_cpy);
             return NULL;
         }
         if (json_array_add(output_array, new_array_value) == JSONFailure) {
             json_value_free(new_array_value);
             json_value_free(output_value);
-            t_strcpy(string, str_cpy);
             return NULL;
         }
         SKIP_WHITESPACES(str_cpy);
-        if (*str_cpy != ',') _Checked {
+        if (**str_cpy != ',') _Checked {
             break;
         }
         SKIP_CHAR(str_cpy);
         SKIP_WHITESPACES(str_cpy);
     }
     SKIP_WHITESPACES(str_cpy);
-    if (*str_cpy != ']' || /* Trim array after parsing is over */
+    if (**str_cpy != ']' || /* Trim array after parsing is over */
      json_array_resize(output_array, json_array_get_count(output_array)) == JSONFailure) {
             json_value_free(output_value);
-        t_strcpy(string, str_cpy);
             return NULL;
     }
     SKIP_CHAR(str_cpy);
-    t_strcpy(string, str_cpy);
     return output_value;
 }
 
-_TPtr<TJSON_Value> parse_string_value(_TPtr<const char> string,
-    _TPtr<_TPtr<char>(_TPtr<const char> input,
-        size_t len)> process_string) {
-    int str_len = t_strlen(string);
-    _TPtr<const char> str_cpy = (_TPtr<const char>)string_tainted_malloc
-    (str_len*sizeof(char));
-    t_strcpy(str_cpy, string);
+_TPtr<TJSON_Value> parse_string_value(_Ptr<_TPtr<const char>> str_cpy) {
     _TPtr<TJSON_Value> value = NULL;
-    _TPtr<char> new_string = get_quoted_string(str_cpy, process_string);
+    _TPtr<char> new_string = get_quoted_string(str_cpy);
     if (new_string == NULL) {
-        t_strcpy(string, str_cpy);
         return NULL;
     }
     value = json_value_init_string_no_copy(new_string);
     if (value == NULL) {
         parson_tainted_free(char, new_string);
-        t_strcpy(string, str_cpy);
         return NULL;
     }
-    t_strcpy(string, str_cpy);
     return value;
 }
 /*
@@ -1048,23 +995,16 @@ _TPtr<TJSON_Value> parse_string_value(_TPtr<const char> string,
  * Id_Checked eally we could have this as a mirror function, but I am m_Checked aking it tainted,
  * as it will only ever be called from a Callback function with tainted_Checked  values
  */
-_TPtr<TJSON_Value> parse_boolean_value(_TPtr<const char> string) {
-    int str_len = t_strlen(string);
-    _TPtr<const char> str_cpy = (_TPtr<const char>)string_tainted_malloc
-    (str_len*sizeof(char));
-    t_strcpy(str_cpy, string);
+_TPtr<TJSON_Value> parse_boolean_value(_Ptr<_TPtr<const char>> str_cpy) {
     size_t true_token_size = SIZEOF_TOKEN("true");
     size_t false_token_size = SIZEOF_TOKEN("false");
-    if (t_strncmp("true", str_cpy, true_token_size) == 0) {
-        str_cpy += true_token_size;
-        t_strcpy(string, str_cpy);
+    if (t_strncmp("true", *str_cpy, true_token_size) == 0) {
+        *str_cpy += true_token_size;
         return json_value_init_boolean(1);
-    } else if (t_strncmp("false", str_cpy, false_token_size) == 0) {
-        str_cpy += false_token_size;
-        t_strcpy(string, str_cpy);
+    } else if (t_strncmp("false", *str_cpy, false_token_size) == 0) {
+        *str_cpy += false_token_size;
         return json_value_init_boolean(0);
     }
-    t_strcpy(string, str_cpy);
     return NULL;
 }
 
@@ -1074,38 +1014,26 @@ _TPtr<TJSON_Value> parse_boolean_value(_TPtr<const char> string) {
 /*
  * No Unchecked_Checked  operation, hence no need to be tainted
  */
-_Unchecked _TPtr<TJSON_Value> parse_number_value(_TPtr<const char> string) {
-    int str_len = t_strlen(string);
-    _TPtr<const char> str_cpy = (_TPtr<const char>)string_tainted_malloc
-            (str_len*sizeof(char));
-    t_strcpy(str_cpy, string);
-    _TPtr<_TPtr<char>>end = (_TPtr<_TPtr<char>>)t_malloc(sizeof(_TPtr<char>));
-    *end = NULL;
+_Unchecked _TPtr<TJSON_Value> parse_number_value(_Ptr<_TPtr<const char>> str_cpy) {
+    _TPtr<char> end = NULL;
     double number = 0;
-    number = t_strtod((_TPtr<char>)str_cpy, end);
-    if (!is_decimal((_TPtr<char>)str_cpy, (size_t)(t_strlen(string) - t_strlen((_TPtr<const char>)*end)))) {
-        t_strcpy(string, str_cpy);
+    errno = 0;
+    number = t_strtod(*str_cpy, &end);
+    if (errno || !is_decimal(*str_cpy, (size_t)(end - *str_cpy))) {
         return NULL;
     }
-    str_cpy = (_TPtr<const char>)(*end);
-    t_strcpy(string, str_cpy);
+    *str_cpy = end;
     return json_value_init_number(number);
 }
 /*
  * No Unchecked operation, hence no need _Checked to be tainted
  */
-static _TPtr<TJSON_Value> parse_null_value(_TPtr<const char> string) _Unchecked{
-    int str_len = t_strlen(string);
-    _TPtr<const char> str_cpy = (_TPtr<const char>)string_tainted_malloc
-    (str_len*sizeof(char));
-    t_strcpy(str_cpy, string);
+static _TPtr<TJSON_Value> parse_null_value(_Ptr<_TPtr<const char>> str_cpy) _Unchecked{
     size_t token_size = SIZEOF_TOKEN("null");
-    if (t_strncmp((const char*)"null", str_cpy, token_size) == 0) {
-    str_cpy += token_size;
-    t_strcpy(string, str_cpy);
+    if (t_strncmp("null", *str_cpy, token_size) == 0) {
+        *str_cpy += token_size;
         return json_value_init_null();
     }
-    t_strcpy(string, str_cpy);
     return NULL;
 }
 
@@ -1417,8 +1345,7 @@ _TPtr<TJSON_Value> json_parse_file(_Nt_array_ptr<const char>filename) {
  * Hence this function is best suggested to be tainted
  */
 
-_TPtr<TJSON_Value> json_parse_file_with_comments(_Nt_array_ptr<const char> filename,
-    _TPtr<_TPtr<TJSON_Value>(_TPtr<const char>, size_t)>parse_value) {
+_TPtr<TJSON_Value> json_parse_file_with_comments(_Nt_array_ptr<const char> filename) {
     _Nt_array_ptr<char> file_contents = read_file(filename);
     _TPtr<TJSON_Value> output_value = NULL;
     if (file_contents == NULL) {
@@ -1428,7 +1355,7 @@ _TPtr<TJSON_Value> json_parse_file_with_comments(_Nt_array_ptr<const char> filen
     int len = strlen(file_contents);
     Tainted_file_contents = string_tainted_malloc(len *sizeof(char));
     t_strcpy(Tainted_file_contents, file_contents);
-    output_value = json_parse_string_with_comments(Tainted_file_contents, parse_value);
+    output_value = json_parse_string_with_comments(Tainted_file_contents);
     parson_tainted_free(char, Tainted_file_contents);
     parson_free(char, file_contents);
     return output_value;
@@ -1449,7 +1376,7 @@ _TPtr<TJSON_Value> json_parse_string(_TPtr<const char> string) {
     if (string[0] == '\xEF' && string[1] == '\xBB' && string[2] == '\xBF') _Checked {
         string = string + 3; /* Support for UTF-8 BOM */
     }
-    return parse_value((_TPtr<const char>)string, 0);
+    return parse_value(&string, 0);
    }
 }
 /*
@@ -1457,21 +1384,20 @@ _TPtr<TJSON_Value> json_parse_string(_TPtr<const char> string) {
  * Hence this function is best suggested to be tainted
  */
 
-_TPtr<TJSON_Value> json_parse_string_with_comments(_TPtr<const char> string,
-_TPtr<_TPtr<TJSON_Value>(_TPtr<const char>, size_t)>parse_value) {
-_TPtr<TJSON_Value> result = NULL;
-_TPtr<char> string_mutable_copy = (_TPtr<char>)tainted_parson_strdup(string);
-if (string_mutable_copy == NULL) {
-return NULL;
-}
-remove_comments(string_mutable_copy, "/*", "*/");
-remove_comments(string_mutable_copy, "//", "\n");
-_Unchecked {
-    _TPtr<const char> string_mutable_copy_ptr[1] = { NULL };
-string_mutable_copy_ptr[0] = string_mutable_copy;
-result = (_TPtr<TJSON_Value>)parse_value(string_mutable_copy, 0);
-parson_tainted_free(char, string_mutable_copy);
-return result;
+_TPtr<TJSON_Value> json_parse_string_with_comments(_TPtr<const char> string) {
+    _TPtr<TJSON_Value> result = NULL;
+    _TPtr<char> string_mutable_copy = (_TPtr<char>)tainted_parson_strdup(string);
+    if (string_mutable_copy == NULL) {
+        return NULL;
+    }
+    remove_comments(string_mutable_copy, "/*", "*/");
+    remove_comments(string_mutable_copy, "//", "\n");
+    _Unchecked {
+        _TPtr<const char> string_mutable_copy_ptr[1] = { NULL };
+        string_mutable_copy_ptr[0] = string_mutable_copy;
+        result = (_TPtr<TJSON_Value>)parse_value(string_mutable_copy_ptr, 0);
+        parson_tainted_free(char, string_mutable_copy);
+        return result;
   }
 }
 
@@ -2539,32 +2465,34 @@ void json_set_escape_slashes(int escape_slashes) {
 
 
 JSON_Status json_serialize_to_file(_TPtr<const TJSON_Value> value,
-                                   _Nt_array_ptr<char> filename) {
+                                   _Nt_array_ptr<char> filename) _Unchecked{
     JSON_Status return_code = JSONSuccess;
     _Ptr<FILE> fp = NULL;
-    _TPtr<char> tainted_serialized_string =
-            json_serialize_to_string(value);
-    _Nt_array_ptr<char> serialized_string = NULL;
-    long tainted_serialized_string_len = t_strlen(tainted_serialized_string);
-    serialized_string = parson_string_malloc(tainted_serialized_string_len + 1);
+    _TPtr<char> serialized_string = json_serialize_to_string(value);
     if (serialized_string == NULL) {
         return JSONFailure;
     }
     fp = fopen(filename, "w");
     if (fp == NULL) {
-        json_free_serialized_string(tainted_serialized_string);
-        free<char>(serialized_string);
+        json_free_serialized_string(serialized_string);
         return JSONFailure;
     }
-    if (fputs(serialized_string, fp) == EOF) {
+    /*
+     * Marshalling tainted serialized string into a checked serialized string
+     *
+     */
+    int len = t_strlen(serialized_string);
+    char* serialized_string_checked =
+            (char* )malloc(t_strlen(serialized_string)*sizeof(char));
+    t_strcpy(serialized_string_checked, serialized_string);
+    if (fputs((const char*)serialized_string_checked, fp) == EOF) {
         return_code = JSONFailure;
     }
-
     if (fclose(fp) == EOF) {
         return_code = JSONFailure;
     }
-    json_free_serialized_string(tainted_serialized_string);
-    free<char>(serialized_string);
+    json_free_serialized_string(serialized_string);
+    free(serialized_string_checked);
     return return_code;
 }
 #pragma CHECKED_SCOPE pop

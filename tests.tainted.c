@@ -62,7 +62,6 @@ void _T_print_commits_info(_TPtr<const char> username, _TPtr<const char> repo);
 void persistence_example(void);
 void serialization_example(void);
 
-_Callback _TPtr<TJSON_Value>       parse_value(_TPtr<const char> string, size_t nesting);
 static int malloc_count;
 
 //static _TPtr<void> counted_malloc(size_t size);
@@ -111,11 +110,11 @@ void test_suite_1(void) {
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
-    TEST((val_tainted = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_1_1.txt", &parse_value)) != NULL);
-    //TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
+    TEST((val_tainted = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_1_1.txt")) != NULL);
+    TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
-    //TEST((val_tainted = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_1_3.txt", &parse_value)) != NULL);
+    TEST((val_tainted = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_1_3.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
@@ -302,7 +301,7 @@ void test_suite_2_with_comments(void) {
     _TPtr<char> filename = string_tainted_malloc(100*sizeof(char));
     t_strcpy(filename,"/home/arun/Desktop/checkedc-parson/tests/test_2_comments.txt");
     _TPtr<TJSON_Value> root_value = NULL;
-    root_value = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_2_comments.txt", &parse_value);
+    root_value = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_2_comments.txt");
     test_suite_2(root_value);
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string(root_value))));
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string_pretty(root_value))));

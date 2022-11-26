@@ -26,7 +26,7 @@ target_link_libraries(wasm "${CMAKE_SOURCE_DIR}/static_libraries/tainted.a"
         dl)
 target_include_directories(wasm PUBLIC "${CMAKE_SOURCE_DIR}/parson.wasm.h"
         )
-add_executable(NonWasm "${CMAKE_SOURCE_DIR}/tests.c"
+add_executable(NonWasm "${CMAKE_SOURCE_DIR}/tests.tainted.c"
         "${CMAKE_SOURCE_DIR}/parson.tainted.c"
         )
 target_include_directories(NonWasm PUBLIC "${CMAKE_SOURCE_DIR}/parson.tainted.h"

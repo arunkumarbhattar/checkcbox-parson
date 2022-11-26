@@ -65,9 +65,7 @@ _Tainted const enum json_result_t {
 typedef int JSON_Status;
 
 
-_TPtr<TJSON_Value> parse_string_value(_TPtr<const char> string,
-_TPtr<_TPtr<char>(_TPtr<const char> input,
-        size_t len)> process_string);
+_TPtr<TJSON_Value> parse_string_value(_Ptr<_TPtr<const char>> string);
 //_Tainted _TPtr<char> string_tainted_malloc(size_t sz) : count(sz);
 /* Call only once, before calling any other function from parson API. If not called, malloc and free
    from stdlib will be used for all allocations */
@@ -82,17 +80,15 @@ _TPtr<TJSON_Value> json_parse_file(_Nt_array_ptr<const char> filename);
 
 /* Parses first JSON value in a file and ignores comments (/ * * / and //),
    returns NULL in case of error */
-_TPtr<TJSON_Value> json_parse_file_with_comments(_Nt_array_ptr<const char> filename,
-_TPtr<_TPtr<TJSON_Value>(_TPtr<const char>, size_t)>parse_value);
+_TPtr<TJSON_Value> json_parse_file_with_comments(_Nt_array_ptr<const char> filename);
 
 /*  Parses first JSON value in a string, returns NULL in case of error */
 _TPtr<TJSON_Value> json_parse_string(_TPtr<const char> string);
 
 /*  Parses first JSON value in a string and ignores comments (/ * * / and //),
     returns NULL in case of error */
-_Callback _TPtr<TJSON_Value>       parse_value(_TPtr<const char> string, size_t nesting);
-_TPtr<TJSON_Value> json_parse_string_with_comments(_TPtr<const char> string,
-_TPtr<_TPtr<TJSON_Value>(_TPtr<const char>, size_t)>parse_value);
+_TPtr<TJSON_Value>       parse_value(_Ptr<_TPtr<const char>> string, size_t nesting);
+_TPtr<TJSON_Value> json_parse_string_with_comments(_TPtr<const char> strings);
 
 /* Serialization */
 size_t      json_serialization_size(_TPtr<const TJSON_Value> value); /* returns 0 on fail */
@@ -184,21 +180,20 @@ static void             json_array_free(_TPtr<TJSON_Array> array);
 _TPtr<TJSON_Value> json_value_init_string_no_copy(_TPtr<char> string);
 
 /* Parser */
-static JSON_Status            skip_quotes(_TPtr<const char> string);
-int _Unchecked parse_utf16(_TPtr<const char> unprocessed, _TPtr<char> processed);
-_Callback static _TPtr<char>    process_string(_TPtr<const char> input, size_t len);
+static JSON_Status            skip_quotes(_Ptr<_TPtr<const char>> string);
+int _Unchecked parse_utf16(_TPtr<const char>* unprocessed, _TPtr<char>* processed);
+static _TPtr<char>    process_string(_TPtr<const char> input, size_t len);
 /*
  * It does not matter if the function pointer (callback) does not bear tainted pointers
  *
  */
-_TPtr<char> get_quoted_string(_TPtr<const char> string,
-_TPtr<_TPtr<char>(_TPtr<const char> input, size_t len)> process_string);
-static _TPtr<TJSON_Value>       parse_object_value(_TPtr<const char> string, size_t nesting);
-static _TPtr<TJSON_Value>       parse_array_value(_TPtr<const char> string, size_t nesting);
-static _TPtr<TJSON_Value>       parse_boolean_value(_TPtr<const char> string);
+_TPtr<char> get_quoted_string(_Ptr<_TPtr<const char>> string);
+static _TPtr<TJSON_Value>       parse_object_value(_Ptr<_TPtr<const char>> string, size_t nesting);
+static _TPtr<TJSON_Value>       parse_array_value(_Ptr<_TPtr<const char>> string, size_t nesting);
+static _TPtr<TJSON_Value>       parse_boolean_value(_Ptr<_TPtr<const char>> string);
 
-_TPtr<TJSON_Value> parse_number_value(_TPtr<const char> string);
-static _TPtr<TJSON_Value>       parse_null_value(_TPtr<const char> string);
+_TPtr<TJSON_Value> parse_number_value(_Ptr<_TPtr<const char>> string);
+static _TPtr<TJSON_Value>       parse_null_value(_Ptr<_TPtr<const char>> string);
 
 
 /* Serialization */
