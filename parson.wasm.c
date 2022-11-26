@@ -47,7 +47,7 @@
 #pragma CHECKED_SCOPE push
 #pragma CHECKED_SCOPE on
 
-#include "parson.tainted.h"
+#include "parson.wasm.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -391,7 +391,6 @@ int verify_utf8_sequence(_TPtr<const unsigned char> string, _TPtr<int> len) {
     // TODO: Requires bounds widening, so left unchecked.
     _Unchecked
     {
-//        _TPtr<const unsigned char> string = s;
         if (*len == 1) {
             cp = string[0];
         } else if (*len == 2 && IS_CONT(string[1])) {
@@ -460,7 +459,6 @@ static int is_valid_utf8(_TPtr<const char> string,
  * Marked as _Tainted because --> Called from _Tainted function (which had to be marked _Tainted to silence bounds errors)
  */
 _Tainted int is_decimal(_TPtr<const char> string, size_t length) _Unchecked{
-
 return (int) w2c_is_decimal(c_fetch_sandbox_address(),
 (int)string, length);
 }
@@ -770,8 +768,7 @@ _Mirror static
         _Checked {
   int str_len = t_strlen(string);
   _TPtr<const char> str_cpy =
-      (_TPtr<const char>)string_tainted_malloc(str_len *
-                                                               sizeof(char));
+      (_TPtr<const char>)string_tainted_malloc(str_len * sizeof(char));
   t_strcpy(str_cpy, string);
   if (*str_cpy != '\"') {
     return JSONFailure;
