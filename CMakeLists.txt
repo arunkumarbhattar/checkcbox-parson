@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
-set(CMAKE_C_COMPILER /home/twinturbo/Desktop/ExtraSpace/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang)
-set(CMAKE_CXX_COMPILER /home/twinturbo/Desktop/ExtraSpace/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang++)
+set(CMAKE_C_COMPILER /home/arun/Desktop/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang)
+set(CMAKE_CXX_COMPILER /home/arun/Desktop/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang++)
 project(checkedc-parson
         VERSION 0.1
         DESCRIPTION "An example application that simulates a typical image parsing program")
@@ -12,19 +12,24 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ldl -lpthread")
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    add_compile_options( -fPIE -Wall -Wextra)
+    add_compile_options( -g -fPIE -Wall -Wextra -fw2c_sbx)
     add_link_options(-ldl -lstdc++)
 endif()
-add_executable(final "${CMAKE_SOURCE_DIR}/tests.c"
+add_executable(final_wasm "${CMAKE_SOURCE_DIR}/tests.c"
         "${CMAKE_SOURCE_DIR}/parson.wasm.c"
         )
-target_include_directories(final PUBLIC "${CMAKE_SOURCE_DIR}/parson.h"
+target_include_directories(final_wasm PUBLIC "${CMAKE_SOURCE_DIR}/parson.h"
         )
-#add_executable(final "${CMAKE_SOURCE_DIR}/tests.c"
-#        "${CMAKE_SOURCE_DIR}/parson.tainted.c"
-#        )
-#target_include_directories(final PUBLIC "${CMAKE_SOURCE_DIR}/parson.tainted.h"
-#        )
+target_link_libraries(final_wasm "${CMAKE_SOURCE_DIR}/static_libraries/tainted.a"
+        "${CMAKE_SOURCE_DIR}/static_libraries/libSBX_CON_LIB.a"
+        "${CMAKE_SOURCE_DIR}/static_libraries/libisc_lib_final.a"
+        dl)
+
+add_executable(final "${CMAKE_SOURCE_DIR}/tests.c"
+        "${CMAKE_SOURCE_DIR}/parson.tainted.c"
+        )
+target_include_directories(final PUBLIC "${CMAKE_SOURCE_DIR}/parson.tainted.h"
+        )
 target_link_libraries(final "${CMAKE_SOURCE_DIR}/static_libraries/tainted.a"
         "${CMAKE_SOURCE_DIR}/static_libraries/libSBX_CON_LIB.a"
         "${CMAKE_SOURCE_DIR}/static_libraries/libisc_lib_final.a"
