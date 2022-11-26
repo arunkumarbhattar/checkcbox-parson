@@ -505,33 +505,32 @@ static _Nt_array_ptr<char> read_file(_Nt_array_ptr<const char> filename)
 }
 
 JSON_Status json_serialize_to_file(_TPtr<const TJSON_Value> value,
-                                   _Nt_array_ptr<char> filename) {
-  JSON_Status return_code = JSONSuccess;
-  _Ptr<FILE> fp = NULL;
-  _TPtr<char> tainted_serialized_string =
-      json_serialize_to_string(value);
-  _Nt_array_ptr<char> serialized_string = NULL;
-  long tainted_serialized_string_len = t_strlen(tainted_serialized_string);
-  serialized_string = parson_string_malloc(tainted_serialized_string_len + 1);
-  if (serialized_string == NULL) {
-    return JSONFailure;
-  }
-  fp = fopen(filename, "w");
-  if (fp == NULL) {
-    json_free_serialized_string(tainted_serialized_string);
-    free<char>(serialized_string);
-    return JSONFailure;
-  }
-  if (fputs(serialized_string, fp) == EOF) {
-    return_code = JSONFailure;
-  }
-
-  if (fclose(fp) == EOF) {
-    return_code = JSONFailure;
-  }
-  json_free_serialized_string(tainted_serialized_string);
-  free<char>(serialized_string);
-  return return_code;
+                                   _Nt_array_ptr<char> filename)
+                                   _Unchecked {
+    JSON_Status return_code = JSONSuccess;
+    _Ptr<FILE> fp = NULL;
+    _TPtr<char> serialized_string = json_serialize_to_string(value);
+    if (serialized_string == NULL) {
+        return JSONFailure;
+    }
+    fp = fopen(filename, "w");
+    if (fp == NULL) {
+        json_free_serialized_string(serialized_string);
+        return JSONFailure;
+    }
+    int len = t_strlen(serialized_string);
+    char* serialized_string_checked =
+            (char* )malloc(t_strlen(serialized_string)*sizeof(char));
+    t_strcpy(serialized_string_checked, serialized_string);
+    if (fputs((const char*)serialized_string_checked, fp) == EOF) {
+        return_code = JSONFailure;
+    }
+    if (fclose(fp) == EOF) {
+        return_code = JSONFailure;
+    }
+    json_free_serialized_string(serialized_string);
+    free(serialized_string_checked);
+    return return_code;
 }
 
 _Mirror static void remove_comments(_TPtr<char> string, _Nt_array_ptr<const char> start_token, _Nt_array_ptr<const char> end_token) _Checked {
@@ -1177,24 +1176,18 @@ _Tainted _TPtr<TJSON_Value> parse_number_value(_TPtr<const char> string)
   _TPtr<const char> str_cpy =
       (_TPtr<const char>)string_tainted_malloc(str_len * sizeof(char));
   t_strcpy(str_cpy, string);
-  _TPtr<_TPtr<char>> end =
-      (_TPtr<_TPtr<char>>)t_malloc<_TPtr<char>>(sizeof(_TPtr<char>));
-  *end = NULL;
+  _TPtr<char> end = NULL;
   double number = 0;
   _Unchecked {
-     number = t_strtod(str_cpy, (_TPtr<_TPtr<char>>)end);  //--> Not helping to silence argument prove error 1st param
+     number = t_strtod(str_cpy, &end);  //--> Not helping to silence argument prove error 1st param
   }
-
-  size_t string_sz = t_strlen(string);
-  size_t end_sz = t_strlen((_TPtr<const char>)*end);
   if (!is_decimal(str_cpy,
-                  (size_t)(string_sz - end_sz))) { /* not a decimal number */
+                  (size_t)(end - str_cpy))) { /* not a decimal number */
     t_strcpy(string, str_cpy);
     return NULL;
   }
-  str_cpy = (_TPtr<const char>)*end;
+  str_cpy = end;
   t_strcpy(string, str_cpy);
-  parson_tainted_free(_TPtr<char>, end);
   return json_value_init_number(number);
 }
 

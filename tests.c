@@ -27,7 +27,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include "parson.tainted.h"
+#include "parson.wasm.h"
 #include <stdint.h>
 #include <stdio_checked.h>
 #include <stdio_tainted.h>
@@ -112,10 +112,10 @@ void test_suite_1(void) {
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
     TEST((val_tainted = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_1_1.txt", &parse_value)) != NULL);
-    //TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
+    TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
-    //TEST((val_tainted = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_1_3.txt", &parse_value)) != NULL);
+    TEST((val_tainted = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_1_3.txt", &parse_value)) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
@@ -803,7 +803,6 @@ void test_suite_11() {
     json_set_escape_slashes(0);
     serialized = json_serialize_to_string(value);
     TEST(t_strcmp(array_with_slashes, serialized) == 0);
-
     json_set_escape_slashes(1);
     serialized = json_serialize_to_string(value);
     TEST(t_strcmp(array_with_escaped_slashes, serialized) == 0);
