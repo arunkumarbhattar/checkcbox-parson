@@ -37,9 +37,15 @@
 #include <string_tainted.h>
 #include <stdlib_tainted.h>
 #include <checkcbox_extensions.h>
-
-#define TEST(A) printf("%d %-72s-", __LINE__, #A);\
-                if(A){puts(" OK");tests_passed++;}\
+#include <time.h>
+#define TEST(A) printf("%d %-72s-", __LINE__, #A); \
+                t = 0;                                   \
+                t = clock();       \
+                if(A){                             \
+                t = clock() - t;                   \
+                double time_taken = ((double)t)/CLOCKS_PER_SEC;\
+                globalTestTime += time_taken;\
+                puts(" OK");tests_passed++;}\
                 else{puts(" FAIL");tests_failed++;}
 #define STREQ(A, B) ((A) && (B) ? t_strcmp((A), (B)) == 0 : 0)
 #define EPSILON 0.000001
@@ -62,7 +68,7 @@ void _T_print_commits_info(_TPtr<const char> username, _TPtr<const char> repo);
 void persistence_example(void);
 void serialization_example(void);
 
-_Callback _TPtr<TJSON_Value>       parse_value(_TPtr<const char> string, size_t nesting);
+_Callback _TPtr<TJSON_Value>       parse_value(_TPtr<_TPtr<const char>> string, size_t nesting);
 static int malloc_count;
 
 //static _TPtr<void> counted_malloc(size_t size);
@@ -70,16 +76,18 @@ static int malloc_count;
 
 
 static char * read_file_test_suite(const char * filename);
-
+clock_t t;
+double globalTestTime = 0;
 static int tests_passed;
 static int tests_failed;
-
 
 int main() {
     /* Example functions from readme file:      */
     /*  */
-    serialization_example();
-    persistence_example();
+    registerCallback_ProcessString();
+    registerCallback_ParseValue();
+//    serialization_example();
+//    persistence_example();
     //json_set_allocation_functions(counted_malloc, counted_free);
     test_suite_1();
     test_suite_2_no_comments();
@@ -93,9 +101,10 @@ int main() {
     test_suite_9();
     test_suite_10();
     test_suite_11();
-    print_commits_info("torvalds", "linux");
+    //print_commits_info("torvalds", "linux");
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
+    printf("Total time taken by CPU: %f\n", globalTestTime);
     return 0;
 }
 
@@ -111,11 +120,11 @@ void test_suite_1(void) {
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
-    TEST((val_tainted = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_1_1.txt", &parse_value)) != NULL);
+    TEST((val_tainted = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_1_1.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
-    TEST((val_tainted = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_1_3.txt", &parse_value)) != NULL);
+    TEST((val_tainted = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_1_3.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
@@ -302,13 +311,12 @@ void test_suite_2_with_comments(void) {
     _TPtr<char> filename = string_tainted_malloc(100*sizeof(char));
     t_strcpy(filename,"/home/arun/Desktop/checkedc-parson/tests/test_2_comments.txt");
     _TPtr<TJSON_Value> root_value = NULL;
-    root_value = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_2_comments.txt", &parse_value);
+    root_value = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_2_comments.txt");
     test_suite_2(root_value);
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string(root_value))));
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string_pretty(root_value))));
     json_value_free(root_value);
     t_free(filename);
-    json_value_free(root_value);
 }
 
 void test_suite_3(void) {
