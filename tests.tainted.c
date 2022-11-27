@@ -37,10 +37,18 @@
 #include <string_tainted.h>
 #include <stdlib_tainted.h>
 #include <checkcbox_extensions.h>
+#include <time.h>
 
-#define TEST(A) printf("%d %-72s-", __LINE__, #A);\
-                if(A){puts(" OK");tests_passed++;}\
+#define TEST(A) printf("%d %-72s-", __LINE__, #A); \
+                t = 0;                                   \
+                t = clock();       \
+                if(A){                             \
+                t = clock() - t;                   \
+                double time_taken = ((double)t)/CLOCKS_PER_SEC;\
+                globalTestTime += time_taken;\
+                puts(" OK");tests_passed++;}\
                 else{puts(" FAIL");tests_failed++;}
+
 #define STREQ(A, B) ((A) && (B) ? t_strcmp((A), (B)) == 0 : 0)
 #define EPSILON 0.000001
 
@@ -69,7 +77,8 @@ static int malloc_count;
 
 
 static char * read_file_test_suite(const char * filename);
-
+clock_t t;
+double globalTestTime = 0;
 static int tests_passed;
 static int tests_failed;
 
@@ -77,8 +86,8 @@ static int tests_failed;
 int main() {
     /* Example functions from readme file:      */
     /*  */
-    serialization_example();
-    persistence_example();
+//    serialization_example();
+//    persistence_example();
     //json_set_allocation_functions(counted_malloc, counted_free);
     test_suite_1();
     test_suite_2_no_comments();
@@ -92,9 +101,10 @@ int main() {
     test_suite_9();
     test_suite_10();
     test_suite_11();
-    print_commits_info("torvalds", "linux");
+    //print_commits_info("torvalds", "linux");
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
+    printf("Total time taken by CPU: %f\n", globalTestTime);
     return 0;
 }
 
@@ -307,7 +317,6 @@ void test_suite_2_with_comments(void) {
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string_pretty(root_value))));
     json_value_free(root_value);
     t_free(filename);
-    json_value_free(root_value);
 }
 
 void test_suite_3(void) {
