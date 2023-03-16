@@ -39,6 +39,19 @@
 #include <checkcbox_extensions.h>
 #include <time.h>
 
+#ifdef WASM_SBX
+#define tainted_free(t, p)   (t_free<t>(p))
+#elif HEAP_SBX
+#define tainted_free(t, p)   (hoard_free<t>(p))
+#endif
+
+#ifdef WASM_SBX
+#define tainted_malloc(t, p)   (t_malloc<t>(p))
+#elif HEAP_SBX
+#define tainted_malloc(t, p)   (hoard_malloc<t>(p))
+#endif
+
+
 #define TEST(A) printf("%d %-72s-", __LINE__, #A); \
                 t = 0;                                   \
                 t = clock();       \
@@ -110,21 +123,21 @@ int main() {
 
 void test_suite_1(void) {
     _TPtr<TJSON_Value> val_tainted = NULL;
-    TEST((val_tainted = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_1_1.txt")) != NULL);
+    TEST((val_tainted = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_1_1.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
-    TEST((val_tainted = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_1_2.txt")) == NULL); /* Over 2048 levels of nesting */
+    TEST((val_tainted = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_1_2.txt")) == NULL); /* Over 2048 levels of nesting */
     if (val_tainted) { json_value_free(val_tainted); }
-    TEST((val_tainted = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_1_3.txt")) != NULL);
+    TEST((val_tainted = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_1_3.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
-    TEST((val_tainted = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_1_1.txt")) != NULL);
+    TEST((val_tainted = json_parse_file_with_comments("/home/supercharger/extraspace/checkedc-parson/tests/test_1_1.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
-    TEST((val_tainted = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_1_3.txt")) != NULL);
+    TEST((val_tainted = json_parse_file_with_comments("/home/supercharger/extraspace/checkedc-parson/tests/test_1_3.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val_tainted)), val_tainted));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val_tainted)), val_tainted));
     if (val_tainted) { json_value_free(val_tainted); }
@@ -297,9 +310,9 @@ void test_suite_2_no_comments(void) {
     _TPtr<TJSON_Value> val_tainted = NULL;
     _TPtr<char> filename = string_tainted_malloc(100*sizeof(char));
 
-    t_strcpy(filename,"/home/arun/Desktop/checkedc-parson/tests/test_2.txt");
+    t_strcpy(filename,"/home/supercharger/extraspace/checkedc-parson/tests/test_2.txt");
     _TPtr<TJSON_Value> root_value = NULL;
-    root_value = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_2.txt");
+    root_value = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_2.txt");
     test_suite_2(root_value);
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string(root_value))));
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string_pretty(root_value))));
@@ -309,14 +322,14 @@ void test_suite_2_no_comments(void) {
 void test_suite_2_with_comments(void) {
     _TPtr<TJSON_Value> val_tainted = NULL;
     _TPtr<char> filename = string_tainted_malloc(100*sizeof(char));
-    t_strcpy(filename,"/home/arun/Desktop/checkedc-parson/tests/test_2_comments.txt");
+    t_strcpy(filename,"/home/supercharger/extraspace/checkedc-parson/tests/test_2_comments.txt");
     _TPtr<TJSON_Value> root_value = NULL;
-    root_value = json_parse_file_with_comments("/home/arun/Desktop/checkedc-parson/tests/test_2_comments.txt");
+    root_value = json_parse_file_with_comments("/home/supercharger/extraspace/checkedc-parson/tests/test_2_comments.txt");
     test_suite_2(root_value);
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string(root_value))));
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string_pretty(root_value))));
     json_value_free(root_value);
-    t_free(filename);
+    tainted_free(char, filename);
 }
 
 void test_suite_3(void) {
@@ -443,16 +456,16 @@ void test_suite_3(void) {
     t_strcpy(filename,"[-1.7976931348623157e309]");
     TEST(json_parse_string(filename) == NULL);
     TEST(malloc_count == 0);
-    t_free(temp_string);
-    t_free(filename);
+    tainted_free(char, temp_string);
+    tainted_free(char, filename);
 }
 void test_suite_4() {
     _TPtr<TJSON_Value> val_tainted = NULL;
     _TPtr<char> filename = string_tainted_malloc(100*sizeof(char));
-    t_strcpy(filename,"/home/arun/Desktop/checkedc-parson/tests/test_2.txt");
+    t_strcpy(filename,"/home/supercharger/extraspace/checkedc-parson/tests/test_2.txt");
     _TPtr<TJSON_Value> a = NULL, a_copy = NULL;
     t_printf("Testing %s:\n", filename);
-    a = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_2.txt");
+    a = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_2.txt");
     int res = json_value_equals(a, a);
     TEST(res); /* test equality test */
     a_copy = json_value_deep_copy(a);
@@ -463,8 +476,8 @@ void test_suite_4() {
 void test_suite_5(void) {
     double zero = 0.0; /* msvc is silly (workaround for error C2124) */
     _TPtr<char> filename = string_tainted_malloc(100*sizeof(char));
-    t_strcpy(filename,"/home/arun/Desktop/checkedc-parson/tests/test_5.txt");
-    _TPtr<TJSON_Value> val_from_file = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_5.txt");
+    t_strcpy(filename,"/home/supercharger/extraspace/checkedc-parson/tests/test_5.txt");
+    _TPtr<TJSON_Value> val_from_file = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_5.txt");
     _TPtr<TJSON_Value> val = NULL;
     _TPtr<TJSON_Value> val_parent = NULL;
     _TPtr<TJSON_Object> obj = NULL;
@@ -679,14 +692,14 @@ void test_suite_5(void) {
     TEST(json_object_set_number(obj, string_1, 0.0 / zero) == JSONFailure);
     t_strcpy(string_1,"num");
     TEST(json_object_set_number(obj,string_1 , 1.0 / zero) == JSONFailure);
-    t_free(string_1);
-    t_free(string_2);
+    tainted_free(char, string_1);
+    tainted_free(char, string_2);
 }
 void test_suite_6(void) {
     _TPtr<TJSON_Value> a = NULL;
     _TPtr<TJSON_Value> b = NULL;
-    a = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_2.txt");
-    b = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_2.txt");
+    a = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_2.txt");
+    b = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_2.txt");
     TEST(json_value_equals(a, b));
     _TPtr<char> string_1 = string_tainted_malloc(100*sizeof(char));
     _TPtr<char> string_2 = string_tainted_malloc(100*sizeof(char));
@@ -699,11 +712,11 @@ void test_suite_6(void) {
     t_strcpy(string_1,"string array");
     json_array_append_number(json_object_get_array(json_object(b), string_1), 1337);
     TEST(!json_value_equals(a, b));
-    t_free(string_1);
-    t_free(string_2);
+    tainted_free(char, string_1);
+    tainted_free(char, string_2);
 }
 void test_suite_7(void) {
-    _TPtr<TJSON_Value> val_from_file = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_5.txt");
+    _TPtr<TJSON_Value> val_from_file = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_5.txt");
     _TPtr<TJSON_Value> schema = json_value_init_object();
     _TPtr<TJSON_Object> schema_obj = json_value_get_object(schema);
     _TPtr<TJSON_Array> interests_arr = NULL;
@@ -729,8 +742,8 @@ void test_suite_7(void) {
     t_strcpy(string_2,"");
     json_object_set_string(schema_obj, string_1, string_2);
     TEST(json_validate(schema, val_from_file) == JSONFailure);
-    t_free(string_1);
-    t_free(string_2);
+    tainted_free(char, string_1);
+    tainted_free(char, string_2);
 }
 
 void test_suite_8(void) {
@@ -738,11 +751,11 @@ void test_suite_8(void) {
     _TPtr<TJSON_Value> b = NULL;
     _TPtr<char> buf = NULL;
     size_t serialization_size = 0;
-    a = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_2.txt");
-    TEST(json_serialize_to_file(a, "/home/arun/Desktop/checkedc-parson/tests/test_2_serialized.txt") == JSONSuccess);
-    b = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_2_serialized.txt");
+    a = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_2.txt");
+    TEST(json_serialize_to_file(a, "/home/supercharger/extraspace/checkedc-parson/tests/test_2_serialized.txt") == JSONSuccess);
+    b = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_2_serialized.txt");
     TEST(json_value_equals(a, b));
-    remove("/home/arun/Desktop/checkedc-parson/tests/test_2_serialized.txt");
+    remove("/home/supercharger/extraspace/checkedc-parson/tests/test_2_serialized.txt");
     serialization_size = json_serialization_size(a);
     buf = json_serialize_to_string(a);
     long buf_len = t_strlen(buf);
@@ -757,16 +770,16 @@ void test_suite_9(void) {
     _TPtr<TJSON_Value> a = NULL;
     _TPtr<TJSON_Value> b = NULL;
     size_t serialization_size = 0;
-    a = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_2_pretty.txt");
-    TEST(json_serialize_to_file_pretty(a, "/home/arun/Desktop/checkedc-parson/tests/test_2_serialized_pretty.txt") == JSONSuccess);
-    b = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_2_serialized_pretty.txt");
+    a = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_2_pretty.txt");
+    TEST(json_serialize_to_file_pretty(a, "/home/supercharger/extraspace/checkedc-parson/tests/test_2_serialized_pretty.txt") == JSONSuccess);
+    b = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_2_serialized_pretty.txt");
     TEST(json_value_equals(a, b));
-    remove("/home/arun/Desktop/checkedc-parson/tests/test_2_serialized_pretty.txt");
+    remove("/home/supercharger/extraspace/checkedc-parson/tests/test_2_serialized_pretty.txt");
     serialization_size = json_serialization_size_pretty(a);
     serialized = json_serialize_to_string_pretty(a);
     TEST((t_strlen(serialized)+1) == serialization_size);
 
-    file_contents = read_file_test_suite("/home/arun/Desktop/checkedc-parson/tests/test_2_pretty.txt");
+    file_contents = read_file_test_suite("/home/supercharger/extraspace/checkedc-parson/tests/test_2_pretty.txt");
     t_printf("The value is %d\n", t_strcmp(file_contents, serialized));
     TEST(STREQ(file_contents, serialized));
 }
@@ -777,18 +790,18 @@ void test_suite_10(void) {
 
     malloc_count = 0;
 
-    val = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_1_1.txt");
+    val = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_1_1.txt");
     json_value_free(val);
 
-    val = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_1_3.txt");
+    val = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_1_3.txt");
     json_value_free(val);
 
-    val = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_2.txt");
+    val = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_2.txt");
     serialized = json_serialize_to_string_pretty(val);
     json_free_serialized_string(serialized);
     json_value_free(val);
 
-    val = json_parse_file("/home/arun/Desktop/checkedc-parson/tests/test_2_pretty.txt");
+    val = json_parse_file("/home/supercharger/extraspace/checkedc-parson/tests/test_2_pretty.txt");
     json_value_free(val);
 
     TEST(malloc_count == 0);
@@ -820,8 +833,8 @@ void print_commits_info(const char *username, const char *repo){
     _TPtr<char> _T_username = StaticUncheckedToTStrAdaptor(username, strlen(username));
     _TPtr<char> _T_repo = StaticUncheckedToTStrAdaptor(repo, strlen(repo));
     _T_print_commits_info(_T_username, _T_repo);
-    t_free(_T_username);
-    t_free(_T_repo);
+    tainted_free(char, _T_username);
+    tainted_free(char, _T_repo);
     return;
 }
 void _T_print_commits_info(_TPtr<const char> username, _TPtr<const char> repo) {
@@ -920,8 +933,8 @@ void serialization_example(void) {
     t_puts(serialized_string);
     json_free_serialized_string(serialized_string);
     json_value_free(root_value);
-    t_free(string_1);
-    t_free(string_2);
+    tainted_free(char, string_1);
+    tainted_free(char, string_2);
 }
 
 static char * read_file_test_suite(const char * filename) {
@@ -958,7 +971,7 @@ static char * read_file_test_suite(const char * filename) {
 }
 
 static _TArray_ptr<void> counted_malloc(size_t size) {
-    _TArray_ptr<void> res = (_TArray_ptr<void> )t_malloc<void>(size);
+    _TArray_ptr<void> res = (_TArray_ptr<void> )tainted_malloc(void, size);
     if (res != NULL) {
         malloc_count++;
     }
@@ -969,6 +982,6 @@ static void counted_free(_TPtr<void>ptr) {
     if (ptr != NULL) {
         malloc_count--;
     }
-    t_free(ptr);
+    tainted_free(void, ptr);
 }
 

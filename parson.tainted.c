@@ -86,9 +86,18 @@ _Itype_for_any(T) _TPtr<_TArray_ptr<T> (size_t s) : byte_count(s)> parson_tainte
 _Itype_for_any(T) _TPtr<void (_TArray_ptr<T> : byte_count(0))> parson_tainted_free;
 
 #define parson_malloc(t, sz) (malloc<t>(sz))
-#define parson_tainted_malloc(t, sz) (t_malloc<t>(sz))
+#ifdef WASM_SBX
+    #define parson_tainted_malloc(t, sz) (t_malloc<t>(sz))
+#elif HEAP_SBX
+    #define parson_tainted_malloc(t, sz) (hoard_malloc<t>(sz))
+#endif
+
 #define parson_free(t, p)   (free<t>(_Dynamic_bounds_cast<_Array_ptr<t>>(p, byte_count(0))))
-#define parson_tainted_free(t, p)   (t_free<t>(_Tainted_Dynamic_bounds_cast<_TArray_ptr<t>>(p, byte_count(0))))
+#ifdef WASM_SBX
+    #define parson_tainted_free(t, p)   (t_free<t>(_Tainted_Dynamic_bounds_cast<_TArray_ptr<t>>(p, byte_count(0))))
+#elif HEAP_SBX
+    #define parson_tainted_free(t, p)   (hoard_free<t>(_Tainted_Dynamic_bounds_cast<_TArray_ptr<t>>(p, byte_count(0))))
+#endif
 
 #define parson_free_unchecked(t, buf) (t_free<t>(buf))
 
@@ -268,9 +277,9 @@ int verify_utf8_sequence(_TPtr<const unsigned char> string, _TPtr<int> len) {
  */
 
 static int is_valid_utf8(_TPtr<const char> string, size_t string_len) {
-    _TPtr<int> len = (_TPtr<int>)t_malloc<int>(sizeof(int));
+    _TPtr<int> len = (_TPtr<int>)parson_tainted_malloc(int, sizeof(int));
     *len = 0;
-    _TPtr<int> temp = (_TPtr<int>)t_malloc<int>(1*sizeof(int));
+    _TPtr<int> temp = (_TPtr<int>)parson_tainted_malloc(int, 1*sizeof(int));
     _TPtr<const char> string_end = string + string_len;
     while (string < string_end) _Unchecked{
         if (!verify_utf8_sequence((_TPtr<const unsigned char>)string, len)) {
