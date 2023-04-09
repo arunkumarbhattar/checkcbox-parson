@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
-set(CMAKE_C_COMPILER  /home/supercharger/extraspace/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang)
-set(CMAKE_CXX_COMPILER  /home/supercharger/extraspace/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang++)
+set(CMAKE_C_COMPILER  /home/arun/Desktop/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang)
+set(CMAKE_CXX_COMPILER /home/arun/Desktop/CheckCBox_Compiler/llvm/cmake-build-debug/bin/clang++)
 project(checkedc-parson
         VERSION 0.1
         DESCRIPTION "An example application that simulates a typical image parsing program")
@@ -41,7 +41,7 @@ set_target_properties(NonWasm PROPERTIES LINKER_LANGUAGE CXX)
 add_executable(Hoard "${CMAKE_SOURCE_DIR}/tests.tainted.c"
         "${CMAKE_SOURCE_DIR}/parson.tainted.c"
         )
-target_compile_options(Hoard PRIVATE -fheapsbx -g -DHEAP_SBX)
+target_compile_options(Hoard PRIVATE -fheapsbx -O2 -DHEAP_SBX)
 target_include_directories(Hoard PUBLIC "${CMAKE_SOURCE_DIR}/parson.tainted.h"
         )
 target_link_libraries(Hoard #"${CMAKE_SOURCE_DIR}/static_libraries/tainted.a"

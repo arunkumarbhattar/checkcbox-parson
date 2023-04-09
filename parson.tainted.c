@@ -456,7 +456,7 @@ return JSONFailure;
 }
 _TPtr<_TPtr<TJSON_Value>> temp_values = (_TPtr<_TPtr<TJSON_Value>>)parson_tainted_malloc(TJSON_Value*, new_capacity * sizeof(_TPtr<TJSON_Value>));
 if (temp_values == NULL) {
-parson_free_unchecked(void, (_TArray_ptr<void>)temp_names);
+    parson_tainted_free(void, (_TArray_ptr<void>)temp_names);
 return JSONFailure;
 }
 
