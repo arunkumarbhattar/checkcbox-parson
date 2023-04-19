@@ -583,7 +583,7 @@ _Tainted _TPtr<TJSON_Value> json_value_init_string_no_copy(_TPtr<char> string) {
 /*
  * No Unchecked operation, hence no need to be tainted
  */
-static _Checked JSON_Status skip_quotes(_TPtr<_TPtr<const char>> string) _Checked {
+_Tainted JSON_Status skip_quotes(_TPtr<_TPtr<const char>> string) _Checked {
 if (**string != '\"') {
 return JSONFailure;
 }
@@ -700,13 +700,20 @@ _TLIB unsigned int process_string_trampoline(unsigned sandbox,
             (void *)process_string((_TPtr<const char>)c_fetch_pointer_from_offset(arg_1), (size_t)arg_2));
 }
 
-_Tainted _TPtr<char> get_quoted_string(_TPtr<_TPtr<const char>> string,
-                                       _TPtr<_TPtr<char>(_TPtr<const char> input, size_t len)>process_string) {
-
-        return (_TPtr<char>)(
-        w2c_get_quoted_string(c_fetch_sandbox_address(),
-    (int)string,process_string_trampoline_callback_val
-        ));
+_Tainted _TPtr<char> get_quoted_string(_TPtr<_TPtr<const char>> string) {
+    _TPtr<const char> string_start = *string;
+    size_t string_len = 0;
+    JSON_Status status = skip_quotes(string);
+    if (status != JSONSuccess) {
+        return NULL;
+    }
+    string_len = *string - string_start - 2; /* length without quotes */
+    // TODO: We can't figure this out dynamically
+    _TPtr<const char> one_past_start = NULL;
+    _Unchecked {
+        one_past_start = string_start + 1;
+    }
+    return (_TPtr<char>)process_string(one_past_start, string_len);
 }
 /*
  * No Unchecked operation, hence no need to be tainted
@@ -723,11 +730,11 @@ _Callback _TPtr<TJSON_Value> parse_value(_TPtr<_TPtr<const char>> string, size_t
      */
     switch (**string) {
         case '{':
-            return parse_object_value(string, nesting + 1, &process_string, &parse_value);
+            return parse_object_value(string, nesting + 1);
         case '[':
             return parse_array_value(string, nesting + 1, &parse_value);
         case '\"':
-            return parse_string_value(string, &process_string);
+            return parse_string_value(string);
         case 'f': case 't':
             return parse_boolean_value(string);
         case '-':
@@ -752,17 +759,75 @@ _TLIB unsigned int parse_value_trampoline(unsigned sandbox,
     return c_fetch_pointer_offset(
             (void *)parse_value((_TPtr<_TPtr<const char>>)arg_1, (size_t)arg_2));
 }
-_Tainted _TPtr<TJSON_Value>
-parse_object_value(_TPtr<_TPtr<const char>> str_cpy, size_t nesting,
-                   _TPtr<_TPtr<char>(_TPtr<const char> input, size_t len)>process_string,
-_TPtr<_TPtr<TJSON_Value>(_TPtr<_TPtr<const char>>, size_t)>parse_value)
-{
-    return (_TPtr<TJSON_Value>)(
-        w2c_parse_object_value(c_fetch_sandbox_address(),
-    (int)str_cpy,
-        nesting,
-process_string_trampoline_callback_val,
-parse_value_trampoline_callback_val));
+_TPtr<TJSON_Value>
+parse_object_value(_TPtr<_TPtr<const char>> str_cpy, size_t nesting) {
+    _TPtr<TJSON_Value> output_value = NULL;
+    _TPtr<TJSON_Value> new_value = NULL;
+    _TPtr<TJSON_Object> output_object = NULL;
+    _TPtr<char> new_key = NULL;
+    /*
+     * Checked function
+     * But accepts/returns tainted arguments
+     */
+    output_value = json_value_init_object();
+    if (output_value == NULL) {
+        return NULL;
+    }
+    if (**str_cpy != '{') {
+        json_value_free(output_value);
+        return NULL;
+    }
+    /*
+     * Checked function
+     */
+    output_object = json_value_get_object(output_value);
+    SKIP_CHAR(str_cpy);
+    SKIP_WHITESPACES(str_cpy);
+    if (**str_cpy == '}') _Checked { /* empty object */
+        SKIP_CHAR(str_cpy);
+        return output_value;
+    }
+    while (**str_cpy != '\0') {
+        new_key = get_quoted_string(str_cpy);
+        if (new_key == NULL) {
+            json_value_free(output_value);
+            return NULL;
+        }
+        SKIP_WHITESPACES(str_cpy);
+        if (**str_cpy != ':') {
+            parson_tainted_free(char, new_key);
+            json_value_free(output_value);
+            return NULL;
+        }
+        SKIP_CHAR(str_cpy);
+        new_value = parse_value(str_cpy, nesting);
+        if (new_value == NULL) {
+            parson_tainted_free(char, new_key);
+            json_value_free(output_value);
+            return NULL;
+        }
+        if (json_object_add(output_object, new_key, new_value) == JSONFailure) {
+            parson_tainted_free(char, new_key);
+            json_value_free(new_value);
+            json_value_free(output_value);
+            return NULL;
+        }
+        parson_tainted_free(char, new_key);
+        SKIP_WHITESPACES(str_cpy);
+        if (**str_cpy != ',') _Checked {
+            break;
+        }
+        SKIP_CHAR(str_cpy);
+        SKIP_WHITESPACES(str_cpy);
+    }
+    SKIP_WHITESPACES(str_cpy);
+    if (**str_cpy != '}' || /* Trim object after parsing is over */
+        json_object_resize(output_object, json_object_get_count(output_object)) == JSONFailure) {
+        json_value_free(output_value);
+        return NULL;
+    }
+    SKIP_CHAR(str_cpy);
+    return output_value;
 }
 /*
  * No Unchecked operation, hence no need to be tainted, but lets make it access tainted pointers
@@ -775,11 +840,18 @@ _Tainted _TPtr<TJSON_Value> parse_array_value(_TPtr<_TPtr<const char>> str_cpy, 
 parse_value_trampoline_callback_val);
 }
 
-_Tainted _TPtr<TJSON_Value> parse_string_value(_TPtr<_TPtr<const char>> str_cpy,
-_TPtr<_TPtr<char>(_TPtr<const char> input, size_t len)>process_string) {
-    int ret_param_types[] = {0, 0, 1};
-    return (_TPtr<TJSON_Value>)w2c_parse_string_value(c_fetch_sandbox_address(), (int)str_cpy,
-process_string_trampoline_callback_val);
+_Tainted _TPtr<TJSON_Value> parse_string_value(_TPtr<_TPtr<const char>> str_cpy) {
+_TPtr<TJSON_Value> value = NULL;
+_TPtr<char> new_string = get_quoted_string(str_cpy);
+if (new_string == NULL) {
+return NULL;
+}
+value = json_value_init_string_no_copy(new_string);
+if (value == NULL) {
+parson_tainted_free(char, new_string);
+return NULL;
+}
+return value;
 }
 /*
 /*

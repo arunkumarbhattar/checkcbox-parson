@@ -77,8 +77,7 @@ _TLIB unsigned int parse_value_trampoline(unsigned sandbox,
 
         _TLIB void registerCallback_ProcessString(void);
 _TLIB void registerCallback_ParseValue(void);
-_Tainted _TPtr<TJSON_Value> parse_string_value(_TPtr<_TPtr<const char>> string,
-_TPtr<_TPtr<char>(_TPtr<const char> input, size_t len)>process_string);
+_Tainted _TPtr<TJSON_Value> parse_string_value(_TPtr<_TPtr<const char>> str_cpy);
 //_Tainted _TPtr<char> string_tainted_malloc(size_t sz) : count(sz);
 /* Call only once, before calling any other function from parson API. If not called, malloc and free
    from stdlib will be used for all allocations */
@@ -193,7 +192,7 @@ _Tainted void             json_array_free(_TPtr<TJSON_Array> array);
 _Tainted _TPtr<TJSON_Value> json_value_init_string_no_copy(_TPtr<char> string);
 
 /* Parser */
-static JSON_Status            skip_quotes(_TPtr<_TPtr<const char>> string);
+_Tainted JSON_Status            skip_quotes(_TPtr<_TPtr<const char>> string);
 int _Unchecked parse_utf16(_TPtr<_TPtr<const char>> unprocessed ,
 _TPtr<_TPtr<const char>> processed);
 _Callback static _TPtr<char>    process_string(_TPtr<const char> input, size_t len);
@@ -201,11 +200,9 @@ _Callback static _TPtr<char>    process_string(_TPtr<const char> input, size_t l
  * It does not matter if the function pointer (callback) does not bear tainted pointers
  *
  */
-_TPtr<char> get_quoted_string(_TPtr<_TPtr<const char>> string,_TPtr<_TPtr<char>(_TPtr<const char> input, size_t len)>process_string);
-_Tainted _TPtr<TJSON_Value>       parse_object_value(_TPtr<_TPtr<const char>> string,
-                                                     size_t nesting,
-                                                     _TPtr<_TPtr<char>(_TPtr<const char> input, size_t len)>process_string,
-                                                     _TPtr<_TPtr<TJSON_Value>(_TPtr<_TPtr<const char>>, size_t len)>parse_value);
+_TPtr<char> get_quoted_string(_TPtr<_TPtr<const char>> string);
+_Tainted _TPtr<TJSON_Value>
+parse_object_value(_TPtr<_TPtr<const char>> str_cpy, size_t nesting);
 _Tainted _TPtr<TJSON_Value>       parse_array_value(_TPtr<_TPtr<const char>> string,
                                                     size_t nesting,
                                                             _TPtr<_TPtr<TJSON_Value>(_TPtr<_TPtr<const char>>, size_t)>parse_value);
