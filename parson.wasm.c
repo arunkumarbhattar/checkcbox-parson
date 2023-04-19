@@ -732,7 +732,7 @@ _Callback _TPtr<TJSON_Value> parse_value(_TPtr<_TPtr<const char>> string, size_t
         case '{':
             return parse_object_value(string, nesting + 1);
         case '[':
-            return parse_array_value(string, nesting + 1, &parse_value);
+            return parse_array_value(string, nesting + 1);
         case '\"':
             return parse_string_value(string);
         case 'f': case 't':
@@ -833,12 +833,57 @@ parse_object_value(_TPtr<_TPtr<const char>> str_cpy, size_t nesting) {
  * No Unchecked operation, hence no need to be tainted, but lets make it access tainted pointers
  *
  */
-_Tainted _TPtr<TJSON_Value> parse_array_value(_TPtr<_TPtr<const char>> str_cpy, size_t nesting,
-                                              _TPtr<_TPtr<TJSON_Value>(_TPtr<_TPtr<const char>>, size_t)>parse_value) {
-    int ret_param_types[] = {0, 0, 1};
-    return (_TPtr<TJSON_Value>)w2c_parse_array_value(c_fetch_sandbox_address(), (int)str_cpy, nesting,
-parse_value_trampoline_callback_val);
+_Tainted _TPtr<TJSON_Value> parse_array_value(_TPtr<_TPtr<const char>> str_cpy, size_t nesting) {
+    _TPtr<TJSON_Value> output_value = NULL;
+    _TPtr<TJSON_Value> new_array_value = NULL;
+    _TPtr<TJSON_Array> output_array = NULL;
+    output_value = json_value_init_array();
+    if (output_value == NULL) {
+        return NULL;
+    }
+    if (**str_cpy != '[') {
+        json_value_free(output_value);
+        return NULL;
+    }
+    output_array = json_value_get_array(output_value);
+    SKIP_CHAR(str_cpy);
+    SKIP_WHITESPACES(str_cpy);
+    if (**str_cpy == ']'){ /* empty array */
+        SKIP_CHAR(str_cpy);
+        return output_value;
+    }
+    while (**str_cpy != '\0') {
+        if(**str_cpy == ',')
+        {
+            int i = 10;
+        }
+        new_array_value = parse_value(str_cpy, nesting);
+        if (new_array_value == NULL) {
+            json_value_free(output_value);
+            return NULL;
+        }
+        if (json_array_add(output_array, new_array_value) == JSONFailure) {
+            json_value_free(new_array_value);
+            json_value_free(output_value);
+            return NULL;
+        }
+        SKIP_WHITESPACES(str_cpy);
+        if (**str_cpy != ',') _Checked {
+            break;
+        }
+        SKIP_CHAR(str_cpy);
+        SKIP_WHITESPACES(str_cpy);
+    }
+    SKIP_WHITESPACES(str_cpy);
+    if (**str_cpy != ']' || /* Trim array after parsing is over */
+        json_array_resize(output_array, json_array_get_count(output_array)) == JSONFailure) {
+        json_value_free(output_value);
+        return NULL;
+    }
+    SKIP_CHAR(str_cpy);
+    return output_value;
 }
+
 
 _Tainted _TPtr<TJSON_Value> parse_string_value(_TPtr<_TPtr<const char>> str_cpy) {
 _TPtr<TJSON_Value> value = NULL;

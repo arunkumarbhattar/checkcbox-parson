@@ -17,7 +17,7 @@ endif()
 add_executable(wasm "${CMAKE_SOURCE_DIR}/tests.c"
         "${CMAKE_SOURCE_DIR}/parson.wasm.c"
         )
-target_compile_options(wasm PRIVATE -g -fPIE -Wall -Wextra -fwasmsbx -DWASM_SBX)
+target_compile_options(wasm PRIVATE -O2 -fPIE -Wall -Wextra -fwasmsbx -DWASM_SBX)
 target_include_directories(wasm PUBLIC "${CMAKE_SOURCE_DIR}/parson.h"
         )
 target_link_libraries(wasm "${CMAKE_SOURCE_DIR}/static_libraries/tainted.a"
@@ -29,7 +29,7 @@ target_include_directories(wasm PUBLIC "${CMAKE_SOURCE_DIR}/parson.wasm.h"
 add_executable(NonWasm "${CMAKE_SOURCE_DIR}/tests.tainted.c"
         "${CMAKE_SOURCE_DIR}/parson.tainted.c"
         )
-target_compile_options(NonWasm PRIVATE -g -fPIE -Wall -Wextra -fwasmsbx -DWASM_SBX)
+target_compile_options(NonWasm PRIVATE -O2 -fPIE -Wall -Wextra -fwasmsbx -DWASM_SBX)
 target_include_directories(NonWasm PUBLIC "${CMAKE_SOURCE_DIR}/parson.tainted.h"
         )
 target_link_libraries(NonWasm "${CMAKE_SOURCE_DIR}/static_libraries/tainted.a"

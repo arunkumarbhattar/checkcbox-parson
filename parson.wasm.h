@@ -204,8 +204,7 @@ _TPtr<char> get_quoted_string(_TPtr<_TPtr<const char>> string);
 _Tainted _TPtr<TJSON_Value>
 parse_object_value(_TPtr<_TPtr<const char>> str_cpy, size_t nesting);
 _Tainted _TPtr<TJSON_Value>       parse_array_value(_TPtr<_TPtr<const char>> string,
-                                                    size_t nesting,
-                                                            _TPtr<_TPtr<TJSON_Value>(_TPtr<_TPtr<const char>>, size_t)>parse_value);
+                                                    size_t nesting);
 static _TPtr<TJSON_Value>       parse_boolean_value(_TPtr<_TPtr<const char>> string);
 
 _Tainted _TPtr<TJSON_Value> parse_number_value(_TPtr<_TPtr<const char>> string);
