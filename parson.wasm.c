@@ -1140,7 +1140,6 @@ return written_total;
  * I do not see a real danger here.
  */
 _Checked static int append_string(_TPtr<char> buf,
-                                    //const char* string : itype(_Nt_array_ptr<const char>),
                                     _Nt_array_ptr<const char> string,
         _TPtr<char> buf_start,
 size_t buf_len) {
