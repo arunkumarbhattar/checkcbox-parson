@@ -77,8 +77,7 @@ _TLIB unsigned int parse_value_trampoline(unsigned sandbox,
 
         _TLIB void registerCallback_ProcessString(void);
 _TLIB void registerCallback_ParseValue(void);
-_Tainted _TPtr<TJSON_Value> parse_string_value(_TPtr<_TPtr<const char>> string,
-_TPtr<_TPtr<char>(_TPtr<const char> input, size_t len)>process_string);
+_TPtr<TJSON_Value> parse_string_value(_TPtr<_TPtr<const char>> str_cpy);
 //_Tainted _TPtr<char> string_tainted_malloc(size_t sz) : count(sz);
 /* Call only once, before calling any other function from parson API. If not called, malloc and free
    from stdlib will be used for all allocations */
@@ -201,11 +200,9 @@ _Callback static _TPtr<char>    process_string(_TPtr<const char> input, size_t l
  * It does not matter if the function pointer (callback) does not bear tainted pointers
  *
  */
-_TPtr<char> get_quoted_string(_TPtr<_TPtr<const char>> string,_TPtr<_TPtr<char>(_TPtr<const char> input, size_t len)>process_string);
-_Tainted _TPtr<TJSON_Value>       parse_object_value(_TPtr<_TPtr<const char>> string,
-                                                     size_t nesting,
-                                                     _TPtr<_TPtr<char>(_TPtr<const char> input, size_t len)>process_string,
-                                                     _TPtr<_TPtr<TJSON_Value>(_TPtr<_TPtr<const char>>, size_t len)>parse_value);
+_TPtr<char> get_quoted_string(_TPtr<_TPtr<const char>> string);
+_TPtr<TJSON_Value>
+parse_object_value(_TPtr<_TPtr<const char>> str_cpy, size_t nesting);
 _Tainted _TPtr<TJSON_Value>       parse_array_value(_TPtr<_TPtr<const char>> string,
                                                     size_t nesting,
                                                             _TPtr<_TPtr<TJSON_Value>(_TPtr<_TPtr<const char>>, size_t)>parse_value);
@@ -221,7 +218,7 @@ int            json_serialize_string(_TPtr<const char> string, _TPtr<char> buf, 
 static int _Unchecked append_indent(_TPtr<char> buf,
 int level, _TPtr<char> buf_start , size_t buf_len);
 static int _Unchecked append_string(_TPtr<char> buf,
-const char* string : itype(_Nt_array_ptr<const char>), _TPtr<char> buf_start, size_t buf_len);
+_Nt_array_ptr<const char> string , _TPtr<char> buf_start, size_t buf_len);
 
 /* Functions to check if object has a value with a specific name. Returned value is 1 if object has
  * a value and 0 if it doesn't. dothas functions behave exactly like dotget functions. */
